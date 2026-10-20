@@ -6,6 +6,7 @@ the next fight.
 
 Built for the PGConf.EU 2026 lightning talk **"pg_crash vs rAIden"** (Mortal Kombat style, 5 minutes, no live demo, so the
 fight was recorded on Azure and judged by a referee that does not trust the AI's opinion).
+Slides: [`talk/rAIden-pgconf-2026.pdf`](talk/rAIden-pgconf-2026.pdf), speaker script: [`talk/script.md`](talk/script.md).
 
 ```
 ROUND 1... FIGHT!   pg_crash storm      ->  FINISH HIM!  ->  FATALITY ("FATAL:" is already in the log)
