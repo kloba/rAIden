@@ -2,7 +2,7 @@
 
 Lightning talk, PGConf.EU 2026, Valencia. Slides: `rAIden-pgconf-2026.pdf` (10 slides, about 30 s each).
 Every number below is filled in from the recorded battle (`results/SCOREBOARD.md`); nothing is typed by hand.
-Pace: roughly 135 words per minute, with pauses for the announcer lines. **628 words, about 4.7 minutes spoken.**
+Pace: roughly 135 words per minute, with pauses for the announcer lines. **631 words, about 4.7 minutes spoken.**
 
 Delivery: the announcer lines are in CAPS. Say them slowly, deep voice, then drop back to normal. One breath of silence after
 FINISH HIM, FATALITY and FLAWLESS VICTORY. No live demo (no laptop switching): the fight was recorded on Azure.
@@ -20,7 +20,7 @@ every four seconds."
 ## 2 · Choose your fighter (0:20 - 0:45)
 
 "rAIden reads the Postgres log 24/7 and wakes up in 24 seconds. pg_crash has exactly one move: kill, random target, no
-mercy. This is not a live demo, because I'm not switching laptops. It happened on Azure last night, and the referee is not
+mercy. This is not a live demo, because I'm not switching laptops. It happened on Azure on Tuesday, and the referee is not
 the AI. The referee is a ledger of every commit the application was *told* succeeded."
 
 ## 3 · How rAIden fights (0:45 - 1:20)
@@ -36,12 +36,12 @@ bigger hammer three times, pg_ctlcluster, pg_ctl immediate, systemctl kill minus
 
 "Round one. Somebody leaves a 'temporary' experiment in conf.d, and pg_crash starts. At T plus 24 seconds rAIden wakes up:
 one incident, not 20 log lines. At T plus 28 seconds: FINISH HIM! It has found the crash worker in
-shared_preload_libraries. The chart is the application's own view, commits per ten seconds. Red is the storm.
+shared_preload_libraries. The chart is the application's own view, commits per ten seconds. The dip is the storm.
 96 seconds after the attack the oracle is green."
 
 ## 5 · FATALITY (1:55 - 2:20)
 
-"FATALITY! Yes, the Postgres log already prints FATAL. I did not make that up. rAIden commented out one line, restarted once,
+"FATALITY! Yes, the Postgres log already prints FATAL. I did not make that up. rAIden fixed one line in the config, restarted once,
 and the referee said: zero commits lost. (pause) It is just the first thing that reads the log at 3 a.m."
 
 ## 6 · TOASTY! (2:20 - 2:50)
