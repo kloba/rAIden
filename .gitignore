@@ -1,0 +1,17 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+deploy/azure/state.env
+*.env
+!deploy/vm/raiden.env.example
+.DS_Store
+results/raw/
+results/*.tgz
+results/*.b64
+results/bundle-partial/
+talk/*.SAMPLE-DATA.pdf
+talk/script.SAMPLE-DATA.md
+talk/slides.html

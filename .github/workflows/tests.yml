@@ -1,0 +1,12 @@
+name: tests
+on: [push, pull_request]
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install pytest PyYAML
+      - name: unit tests (guardrails, classifier, aggregator, agent loop with a scripted model, daemon)
+        run: python -m pytest
