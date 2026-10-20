@@ -1,0 +1,26 @@
+{
+  "incident": "inc-20261020T063221-0cee",
+  "finished_at": "2026-10-20T06:36:59.020Z",
+  "resolution": "resolved",
+  "summary": "Evolve completed: added and validated protected-table destructive DDL detector plus learned PITR recovery runbook for DROP TABLE public.entries; recorded evidence in evolution.md.",
+  "turns": 14,
+  "tool_calls": 18,
+  "denied_calls": 0,
+  "total_cost_usd": 0.0,
+  "changes": [
+    {
+      "path": "/opt/raiden/.claude/skills/learned-protected-table-drop-pitr/SKILL.md",
+      "action": "added"
+    },
+    {
+      "path": "/opt/raiden/checks.d/87-protected-ddl.sh",
+      "action": "added"
+    }
+  ],
+  "duration_s": 86.8,
+  "usage": {
+    "prompt_tokens": 224737,
+    "completion_tokens": 6879,
+    "cached_tokens": 198784
+  }
+}

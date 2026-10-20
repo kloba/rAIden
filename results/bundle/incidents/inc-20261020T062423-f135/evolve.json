@@ -1,0 +1,26 @@
+{
+  "incident": "inc-20261020T062423-f135",
+  "finished_at": "2026-10-20T06:30:56.244Z",
+  "resolution": "resolved",
+  "summary": "Evolution complete for inc-20261020T062423-f135: added pg_surgery/pg_toast patrol detector and learned runbook, validated artifacts, and recorded evolution notes.",
+  "turns": 26,
+  "tool_calls": 30,
+  "denied_calls": 1,
+  "total_cost_usd": 0.0,
+  "changes": [
+    {
+      "path": "/opt/raiden/.claude/skills/learned-pg-surgery-toast/SKILL.md",
+      "action": "added"
+    },
+    {
+      "path": "/opt/raiden/checks.d/86-pg-surgery-toast.sh",
+      "action": "added"
+    }
+  ],
+  "duration_s": 155.0,
+  "usage": {
+    "prompt_tokens": 483193,
+    "completion_tokens": 10995,
+    "cached_tokens": 450688
+  }
+}

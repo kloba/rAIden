@@ -1,0 +1,3 @@
+2026-10-20T06:18:53Z first crash at 2026-10-20T06:18:24Z; repeated SIGKILL/exit code 2 crash cycles; pg_probe shows shared_preload_libraries=pg_stat_statements,pg_crash from /etc/postgresql/18/main/conf.d/50-experiment.conf and a nonstandard crash worker, choosing crash-loop-rca.
+2026-10-20T06:18:59Z backing up and disabling pg_crash preload/custom settings because it was added in 50-experiment.conf at 06:18:15 and crash worker coincides with SIGKILL/exit-code crash cycles; keep pg_stat_statements.
+2026-10-20T06:19:05Z restarting postgresql@18-main once because shared_preload_libraries change removing pg_crash requires restart; pg_isready is accepting and postgres -C validates pg_stat_statements only.

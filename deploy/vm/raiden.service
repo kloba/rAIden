@@ -1,0 +1,23 @@
+[Unit]
+Description=rAIden - autonomous on-call DBA for PostgreSQL
+After=network-online.target postgresql@18-main.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=raiden
+Group=raiden
+SupplementaryGroups=postgres adm arena
+WorkingDirectory=/opt/raiden
+EnvironmentFile=/etc/raiden/raiden.env
+Environment=PYTHONPATH=/opt/raiden PYTHONUNBUFFERED=1
+ExecStart=/opt/raiden/venv/bin/python -m raiden run
+Restart=always
+RestartSec=3
+# The agent is a normal user; these keep a runaway tool call from taking the host with it.
+TasksMax=512
+MemoryMax=2G
+UMask=0027
+
+[Install]
+WantedBy=multi-user.target

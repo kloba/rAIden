@@ -1,0 +1,4 @@
+2026-10-20T06:19:01.201Z worst=CRIT liveness=OK wraparound=OK disk=OK archiver=OK backup-freshness=OK sessions=OK integrity=OK crash-recovery=CRIT
+2026-10-20T06:30:23.195Z worst=CRIT liveness=OK wraparound=OK disk=OK archiver=OK backup-freshness=OK sessions=OK integrity=OK crash-recovery=CRIT preload-workers=OK pg-surgery-toast=OK
+2026-10-20T06:38:07.660Z worst=CRIT liveness=OK wraparound=OK disk=OK archiver=OK backup-freshness=OK sessions=OK integrity=OK crash-recovery=CRIT preload-workers=CRIT pg-surgery-toast=OK protected-ddl=OK
+2026-10-20T06:38:36.275Z worst=CRIT liveness=OK wraparound=OK disk=OK archiver=OK backup-freshness=OK sessions=OK integrity=OK crash-recovery=CRIT preload-workers=OK pg-surgery-toast=OK protected-ddl=OK
