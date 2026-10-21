@@ -1,0 +1,33 @@
+[Unit]
+Description=rAIden Console - AI on-call DBA for PostgreSQL fleets
+Documentation=https://github.com/kloba/rAIden
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=raiden
+Group=raiden
+EnvironmentFile=/etc/raiden/console.env
+ExecStart=/opt/raiden/venv/bin/raiden console
+Restart=always
+RestartSec=3
+# hardening: the console only needs its data directory and the network
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+StateDirectory=raiden-console
+StateDirectoryMode=0750
+ReadWritePaths=/var/lib/raiden-console
+UMask=0027
+MemoryMax=2G
+
+[Install]
+WantedBy=multi-user.target

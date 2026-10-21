@@ -1,0 +1,41 @@
+# rAIden Console with a PostgreSQL state store.
+#
+#   cp deploy/console/console.env.example .env      # set RAIDEN_SECRET_KEY and the state store password
+#   docker compose up -d
+#   docker compose exec console raiden console-user you@example.com --role admin
+#   open http://localhost:8080
+#
+# The state store keeps users, servers, incidents, metrics and audit records; it is not one of the servers rAIden
+# monitors. For a quick look without any of this: docker run -p 8080:8080 -e RAIDEN_DEMO=1 raiden-console
+services:
+  console:
+    build: .
+    image: raiden-console:0.2.0
+    restart: unless-stopped
+    ports: ["8080:8080"]
+    environment:
+      RAIDEN_CONSOLE_DB: postgresql+psycopg://raiden:${RAIDEN_STATE_PASSWORD:?set RAIDEN_STATE_PASSWORD in .env}@state:5432/raiden
+      RAIDEN_SECRET_KEY: ${RAIDEN_SECRET_KEY:?set RAIDEN_SECRET_KEY in .env (python -c "import secrets; print(secrets.token_urlsafe(48))")}
+      RAIDEN_BASE_URL: ${RAIDEN_BASE_URL:-http://localhost:8080}
+      RAIDEN_LOG_LEVEL: ${RAIDEN_LOG_LEVEL:-info}
+    volumes: ["console-data:/data"]
+    depends_on:
+      state: { condition: service_healthy }
+
+  state:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: raiden
+      POSTGRES_DB: raiden
+      POSTGRES_PASSWORD: ${RAIDEN_STATE_PASSWORD}
+    volumes: ["state-data:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U raiden -d raiden"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  console-data:
+  state-data:

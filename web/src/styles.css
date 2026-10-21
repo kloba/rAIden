@@ -1,0 +1,183 @@
+@import "tailwindcss";
+
+/* ---------------------------------------------------------------------------------------------------------------
+   rAIden Console design tokens.
+   Day shift (light) and Night shift (dark). Two accents carry meaning everywhere:
+     arc  (violet)  rAIden working on its own - "current flowing"
+     lamp (amber)   a person is needed - the indicator lamp of an open breaker
+   Status colours are reserved for health; server identity colours (charts) never reuse them.
+--------------------------------------------------------------------------------------------------------------- */
+:root {
+  color-scheme: light;
+  --bg: #eef1f5;
+  --surface: #ffffff;
+  --surface-2: #f6f8fa;
+  --surface-3: #eceff4;
+  --line: #dde3ea;
+  --line-strong: #c3ccd8;
+  --ink: #111a27;
+  --ink-2: #4b586a;
+  --ink-3: #626d7a;  /* 4.5:1 or more on every light surface (WCAG AA for small text) */
+  --arc: #5b4cf0;
+  --arc-ink: #4334d6;
+  --arc-soft: #efedff;
+  --arc-line: #c9c2ff;
+  --on-arc: #ffffff;
+  --lamp: #f0a400;
+  --lamp-ink: #855700;
+  --lamp-soft: #fff4d4;
+  --lamp-line: #f7d27a;
+  --ok: #107e4c;
+  --ok-soft: #e3f5eb;
+  --warn: #b64d0a;
+  --warn-soft: #fdeee2;
+  --crit: #ca2828;
+  --crit-soft: #fce7e7;
+  --info: #256cc1;
+  --info-soft: #e7f0fb;
+  --grid: #e6eaf0;
+  --axis: #c3ccd8;
+  --shadow: 0 1px 2px rgb(17 26 39 / 0.06), 0 2px 8px rgb(17 26 39 / 0.04);
+  --shadow-lg: 0 8px 30px rgb(17 26 39 / 0.14);
+  --s1: #2a78d6; --s2: #d65d8f; --s3: #7c5fe0; --s4: #16996b; --s5: #5c6ac4; --s6: #b8406f; --s7: #b9790a; --s8: #0b8fa6;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0b1119;
+  --surface: #121a25;
+  --surface-2: #162030;
+  --surface-3: #1b2739;
+  --line: #223047;
+  --line-strong: #31415b;
+  --ink: #e7ecf3;
+  --ink-2: #a5b1c2;
+  --ink-3: #808ea2;  /* 4.5:1 or more on every dark surface */
+  --arc: #8e83ff;
+  --arc-ink: #b4acff;
+  --arc-soft: #211d45;
+  --arc-line: #463f8a;
+  --on-arc: #15123a;  /* white on #8e83ff is 3.1:1; this is 6.5:1 */
+  --lamp: #ffbd2e;
+  --lamp-ink: #ffd36e;
+  --lamp-soft: #33280b;
+  --lamp-line: #6b5415;
+  --ok: #3dcf8a;
+  --ok-soft: #0f2c1e;
+  --warn: #ff8a4c;
+  --warn-soft: #36200f;
+  --crit: #ff6060;
+  --crit-soft: #3a1416;
+  --info: #5ea1ee;
+  --info-soft: #132a45;
+  --grid: #1c2738;
+  --axis: #31415b;
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.4);
+  --shadow-lg: 0 10px 34px rgb(0 0 0 / 0.55);
+  --s1: #3d8ae6; --s2: #d4588a; --s3: #8c7ce8; --s4: #1f9e72; --s5: #6f7cdc; --s6: #c2497a; --s7: #c4860f; --s8: #1a9ab0;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-arc: var(--arc);
+  --color-arc-ink: var(--arc-ink);
+  --color-arc-soft: var(--arc-soft);
+  --color-arc-line: var(--arc-line);
+  --color-on-arc: var(--on-arc);
+  --color-lamp: var(--lamp);
+  --color-lamp-ink: var(--lamp-ink);
+  --color-lamp-soft: var(--lamp-soft);
+  --color-lamp-line: var(--lamp-line);
+  --color-ok: var(--ok);
+  --color-ok-soft: var(--ok-soft);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --color-crit: var(--crit);
+  --color-crit-soft: var(--crit-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --font-sans: "Atkinson Hyperlegible Next", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Barlow Semi Condensed", "Atkinson Hyperlegible Next", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Atkinson Hyperlegible Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --shadow-card: var(--shadow);
+  --shadow-pop: var(--shadow-lg);
+}
+
+/* element defaults live in the base layer so utilities (text-surface on a link, rounded-full on focus) always win */
+@layer base {
+  html, body, #root { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 1.45;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  ::selection { background: var(--arc-soft); color: var(--ink); }
+  :focus-visible { outline: 2px solid var(--arc); outline-offset: 2px; }
+  button { cursor: pointer; }
+  button:disabled { cursor: not-allowed; }
+  a { color: inherit; text-decoration: none; }
+  * { scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; }
+}
+
+@keyframes current { to { stroke-dashoffset: -28; } }
+@keyframes lamp-glow { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+@keyframes working { 0% { transform: scale(0.85); opacity: 0.7; } 50% { transform: scale(1.15); opacity: 1; } 100% { transform: scale(0.85); opacity: 0.7; } }
+@keyframes rise { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+/* the console's own classes sit in the components layer: a utility next to them (text-[10.5px] on a plate) overrides */
+@layer components {
+  /* switchgear plate: the small engraved label used for sections, columns and fields */
+  .plate {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 11.5px;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  .display { font-family: var(--font-display); font-weight: 600; letter-spacing: 0.005em; }
+  .num { font-variant-numeric: tabular-nums; }
+  .mono { font-family: var(--font-mono); font-size: 0.92em; }
+
+  /* the current that flows through closed breakers on the incident board */
+  .current { stroke-dasharray: 4 10; animation: current 1.6s linear infinite; }
+  .lamp-glow { animation: lamp-glow 2.4s ease-in-out infinite; }
+  .working { animation: working 1.4s ease-in-out infinite; }
+  .rise { animation: rise 0.28s ease-out both; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .current, .lamp-glow, .working, .rise { animation: none !important; }
+  }
+
+  /* markdown written by rAIden */
+  .md { font-size: 13.5px; line-height: 1.55; color: var(--ink); overflow-wrap: anywhere; }
+  .md p { margin: 0 0 0.6em; }
+  .md p:last-child { margin-bottom: 0; }
+  .md ul, .md ol { margin: 0.3em 0 0.7em; padding-left: 1.25em; }
+  .md li { margin: 0.15em 0; }
+  .md ul { list-style: disc; }
+  .md ol { list-style: decimal; }
+  .md strong { font-weight: 650; }
+  .md code { font-family: var(--font-mono); font-size: 0.88em; background: var(--surface-3); border: 1px solid var(--line); border-radius: 5px; padding: 0.05em 0.35em; }
+  .md pre { background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; overflow-x: auto; font-size: 12.5px; margin: 0.5em 0; }
+  .md pre code { background: none; border: 0; padding: 0; }
+  .md h1, .md h2, .md h3 { font-family: var(--font-display); font-weight: 600; margin: 0.9em 0 0.35em; line-height: 1.2; }
+  .md h2 { font-size: 17px; }
+  .md h3 { font-size: 15px; }
+  .md table { border-collapse: collapse; margin: 0.5em 0; font-size: 12.5px; }
+  .md th, .md td { border: 1px solid var(--line); padding: 4px 8px; text-align: left; }
+  .md a { color: var(--arc-ink); text-decoration: underline; text-underline-offset: 2px; }
+}
