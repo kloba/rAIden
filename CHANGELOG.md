@@ -17,7 +17,7 @@ The release that turns rAIden from a single-server agent into a product for a fl
   protections checked against what rAIden's login may do; changes it may not make go to the server's suggestions.
 * Onboarding: a connection test that reads the login's grants, the preparation SQL for each platform, an assessment in
   six areas with a score and sizing from the host profile, one-click fixes through the same approvals. For Azure
-  servers, the four security assessments of Fabric's Database Hub (Entra authentication enabled and enforced,
+  servers, security checks read from the Azure resource (Entra authentication enabled and enforced,
   customer-managed key, public network access).
 * Routines on cron with time zones: checks that cost no tokens and AI reviews.
 * Chat with read-only tools and inline proposals to approve.
