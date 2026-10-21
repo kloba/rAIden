@@ -1,0 +1,18 @@
+[Unit]
+Description=rAIden fortify session (day-0 hardening: backup, replica, baseline config, new artifacts; runs once)
+After=network-online.target postgresql@18-main.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=raiden
+Group=raiden
+SupplementaryGroups=postgres adm arena
+WorkingDirectory=/opt/raiden
+EnvironmentFile=/etc/raiden/raiden.env
+Environment=PYTHONPATH=/opt/raiden PYTHONUNBUFFERED=1
+ExecStart=/opt/raiden/venv/bin/python -m raiden fortify
+TimeoutStartSec=2400
+TasksMax=512
+MemoryMax=2G
+UMask=0027

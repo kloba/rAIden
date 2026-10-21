@@ -251,7 +251,9 @@ class ToolBox:
             return f"ERROR: no skill named {name!r}. Available: {', '.join(names)}"
         text = md.read_text()
         scripts = sorted(str(p) for p in (d / "scripts").glob("*")) if (d / "scripts").is_dir() else []
-        return text + ("\n\n[helper scripts]\n" + "\n".join(scripts) if scripts else "")
+        refs = sorted(str(p) for p in (d / "references").glob("*.md")) if (d / "references").is_dir() else []
+        return (text + ("\n\n[helper scripts]\n" + "\n".join(scripts) if scripts else "")
+                + ("\n\n[reference files: read with cat]\n" + "\n".join(refs) if refs else ""))
 
     async def _t_pg_probe(self) -> str:
         env = {**self._env(), "PGCONNECT_TIMEOUT": "3"}

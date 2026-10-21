@@ -8,15 +8,17 @@ import logging
 import time
 from pathlib import Path
 
+from . import __version__
 from .agent import SessionResult, run_session
 from .config import Config
+from .console_link import ConsoleLink
 from .events import AuditLog, EventLog, utcnow_iso
 from .guardrails import Guard
 from .incident import CRITICAL_WEIGHT, Aggregator, Incident, LogEvent
 from .llm import AzureLLM
 from .memory import snapshot, validate_changes
 from .patrol import log_patrol, patrol_incident, run_checks, worst
-from .prompts import evolve_prompt, incident_prompt, system_prompt
+from .prompts import evolve_prompt, fortify_prompt, incident_prompt, system_prompt
 from .tools import ToolBox
 from .watcher import LivenessMonitor, LogTailer
 
@@ -45,15 +47,19 @@ class Daemon:
         self._patrol_until: dict[str, float] = {}
         self._patrol_now = asyncio.Event()  # set when the log says the configuration was reloaded
         self._admin_until = 0.0  # monotonic deadline: clients disconnected by a planned shutdown are not an incident
+        self.link = ConsoleLink.from_env(cfg.pgdata, cfg.deployment)  # reports to the rAIden console when configured
+        if self.link:
+            self.events.listeners.append(self.link.hook)
 
     # ------------------------------------------------------------------ main loop
     async def run(self) -> None:
         for d in (self.cfg.incidents_dir, self.cfg.work_dir, self.cfg.memory_dir, self.cfg.escalations_dir):
             d.mkdir(parents=True, exist_ok=True)
-        self.events.emit("daemon_started", model=self.cfg.deployment, version="0.1.0")
+        self.events.emit("daemon_started", model=self.cfg.deployment, version=__version__, console=self.link.url if self.link else None)
         log.info("rAIden is on duty: model=%s, watching %s/%s", self.cfg.deployment, self.cfg.pg_log_dir, self.cfg.pg_log_glob)
         await asyncio.gather(
-            self.tailer.run(self.queue), self.liveness.run(self.queue), self._consume(), self._ticker(), self._patrol_loop()
+            self.tailer.run(self.queue), self.liveness.run(self.queue), self._consume(), self._ticker(), self._patrol_loop(),
+            *([self.link.run()] if self.link else []),
         )
 
     async def _consume(self) -> None:
@@ -237,3 +243,41 @@ class Daemon:
         except Exception as exc:
             log.exception("evolve failed")
             self.events.emit("evolution_error", id=inc.id, error=f"{exc.__class__.__name__}: {exc}")
+
+    async def fortify(self) -> SessionResult | None:
+        """Day-0 hardening (no incident): verified backup, streaming replica, baseline config, new checks and a runbook.
+        Run it with the daemon stopped (`raiden fortify`), so that its own noise cannot open an incident."""
+        fort_id = "fort-" + utcnow_iso().replace("-", "").replace(":", "")[:15]
+        idir = self.cfg.incidents_dir / fort_id
+        idir.mkdir(parents=True, exist_ok=True)
+        for d in (self.cfg.work_dir, self.cfg.memory_dir):
+            d.mkdir(parents=True, exist_ok=True)
+        before = await asyncio.to_thread(snapshot, self.cfg)
+        meta = {"id": fort_id, "kind": "fortify", "opened_at": utcnow_iso(), "reason": "fortify (day-0 hardening)", "model": self.cfg.deployment}
+        self._write_meta(idir / "incident.json", meta)
+        self.events.emit("fortify_started", id=fort_id)
+        res: SessionResult | None = None
+        try:
+            toolbox = ToolBox(self.cfg, self.guard, self.audit, self.events, fort_id, idir)
+            res = await run_session(
+                self.cfg, self.llm, toolbox, system_prompt(self.cfg), fortify_prompt(self.cfg, fort_id, idir),
+                max_turns=self.cfg.fortify_max_turns, timeout_s=self.cfg.fortify_timeout_s,
+                transcript_path=idir / "transcript.jsonl", events=self.events, kind="fortify",
+            )
+            changes = await asyncio.to_thread(validate_changes, self.cfg, before)
+            outcome = res.resolution or ("timeout" if res.timed_out else "error")
+            meta.update(
+                finished_at=utcnow_iso(), outcome=outcome, summary=res.summary, num_turns=res.turns,
+                duration_ms=int(res.duration_s * 1000), tool_calls=res.tool_calls, denied_calls=res.denied_calls,
+                total_cost_usd=res.cost_usd, changes=changes, report_path=str(idir / "report.md"), error=res.error,
+                usage={"prompt_tokens": res.prompt_tokens, "completion_tokens": res.completion_tokens, "cached_tokens": res.cached_tokens},
+            )
+            self._write_meta(idir / "incident.json", meta)
+            self.events.emit(
+                "fortify_done", id=fort_id, outcome=outcome, turns=res.turns, seconds=round(res.duration_s, 1), tool_calls=res.tool_calls,
+                denied=res.denied_calls, changes=changes, summary=res.summary[:300],
+            )
+        except Exception as exc:
+            log.exception("fortify failed")
+            self.events.emit("fortify_error", id=fort_id, error=f"{exc.__class__.__name__}: {exc}")
+        return res

@@ -1,6 +1,6 @@
 ---
 name: pitr-restore
-description: Point-in-time recovery into a SIDE CLONE (never over production) to recover a dropped, truncated or damaged table/database or to read data as of an earlier time - "relation \"ledger\" does not exist" (42P01), DROP TABLE / DROP DATABASE / TRUNCATE in the log, reconcile table_missing or lost > 0, good copies for corruption repair. Finds the destructive transaction's xid with pg_waldump, builds the clone with scripts/pitr_clone.sh, copies data back with pg_dump/pg_restore.
+description: Point-in-time recovery into a SIDE CLONE (never over production) to recover a dropped, truncated or damaged table/database or to read data as of an earlier time - "relation \"entries\" does not exist" (42P01), DROP TABLE / DROP DATABASE / TRUNCATE in the log, reconcile error 'table entries does not exist' or lost > 0, good copies for corruption repair. Finds the destructive transaction's xid with pg_waldump, builds the clone with scripts/pitr_clone.sh, copies data back with pg_dump/pg_restore.
 ---
 
 # pitr-restore - zero-loss recovery through a side clone
@@ -34,8 +34,8 @@ sudo -n -u postgres pg_waldump -p /var/lib/postgresql/wal_archive -r Transaction
 ```
 Line: `tx: 81234, lsn: 0/5A0012C8, ... desc: COMMIT 2026-10-20 12:01:02.345 UTC; rels: base/16388/16390 base/16388/16393 ...`
 The DROP's commit is the first such COMMIT at/after the statement time whose `rels:` lists files of the
-ledger DB (table, TOAST table, TOAST index, PK index). Confirm, if needed, in a clone taken just before:
-`SELECT pg_relation_filenode('public.ledger')` must appear in `rels:`. ("end of WAL"/"invalid record" errors at the end of pg_waldump output are normal.)
+ledger DB (table, TOAST table, TOAST index, PK and 2 other indexes). Confirm, if needed, in a clone taken just before:
+`SELECT pg_relation_filenode('public.entries')` must appear in `rels:`. ("end of WAL"/"invalid record" errors at the end of pg_waldump output are normal.)
 
 ## 3. Build the clone (copies the newest base backup older than the target, replays the archive)
 ```bash
@@ -50,27 +50,28 @@ no archiving, no preload libraries, unix socket only. Budget: copy ~ PGDATA size
 
 ## 4. Inspect, then copy back
 ```bash
-S=<SOCKET_DIR>; psql -X -h "$S" -p 5433 -d ledger -c "SELECT count(*), max(created_at) FROM public.ledger" -c '\dp public.ledger' -c '\dt+ public.ledger'
-psql -X -At -d ledger -c "SELECT to_regclass('public.ledger')"                    # does the name exist in production now?
+S=<SOCKET_DIR>; psql -X -h "$S" -p 5433 -d ledger -c "SELECT count(*), max(created_at) FROM public.entries" -c '\dp public.entries' -c '\dt+ public.entries'
+psql -X -At -d ledger -c "SELECT to_regclass('public.entries')"                    # does the name exist in production now?
 ```
 A. Table missing in production:
 ```bash
-pg_dump -h "$S" -p 5433 -d ledger -t public.ledger --no-owner -Fc -f /var/lib/raiden/work/ledger-pitr.dump
+pg_dump -h "$S" -p 5433 -d ledger -t public.entries --no-owner -Fc -f /var/lib/raiden/work/ledger-pitr.dump
 pg_restore -l /var/lib/raiden/work/ledger-pitr.dump                                 # TOC: TABLE, TABLE DATA, CONSTRAINT, INDEX, ACL
 pg_restore -d ledger --no-owner -j1 --exit-on-error /var/lib/raiden/work/ledger-pitr.dump
-psql -X -d ledger -c "ALTER TABLE public.ledger OWNER TO arena" -c '\dp public.ledger'   # ACL must match the clone's \dp
+psql -X -d ledger -c "ALTER TABLE public.entries OWNER TO arena" -c '\dp public.entries'   # ACL must match the clone's \dp
 ```
 B. Name exists again (app recreated it, or TRUNCATE): never overwrite. In the CLONE:
-`ALTER TABLE public.ledger RENAME TO ledger_pitr; ALTER INDEX public.ledger_pkey RENAME TO ledger_pitr_pkey;`
-then dump/restore `-t public.ledger_pitr` as in A and merge in production:
-`INSERT INTO public.ledger (worker, seq, account, amount, payload, created_at) SELECT worker, seq, account, amount, payload, created_at FROM public.ledger_pitr ON CONFLICT (worker, seq) DO NOTHING;`
-Keep ledger_pitr (list it in Follow-ups for humans).
+`ALTER TABLE public.entries RENAME TO entries_pitr; ALTER INDEX public.entries_pkey RENAME TO entries_pitr_pkey;`
+`ALTER INDEX public.entries_account_idx RENAME TO entries_pitr_account_idx; ALTER INDEX public.entries_created_idx RENAME TO entries_pitr_created_idx;`
+then dump/restore `-t public.entries_pitr` as in A and merge in production:
+`INSERT INTO public.entries (id, account, amount, payload, payload_md5, created_at) SELECT id, account, amount, payload, payload_md5, created_at FROM public.entries_pitr ON CONFLICT (id) DO NOTHING;`
+Keep entries_pitr (list it in Follow-ups for humans).
 C. Whole database dropped: `pg_dump -h "$S" -p 5433 -d ledger -Fc -f /var/lib/raiden/work/ledger-db.dump`;
 `psql -X -d postgres -c "CREATE DATABASE ledger OWNER arena"`; `pg_restore -d ledger --exit-on-error /var/lib/raiden/work/ledger-db.dump` (keeps owners).
 
 ## 5. Verify, clean up
-- Row count in production >= clone count; `\d public.ledger` shows PK and indexes; owner arena; grants equal.
-- reconcile (skill data-loss-verification): `table_missing` false, `lost` = 0, `ok` true.
+- Row count in production >= clone count; `\d public.entries` shows PK and indexes; owner arena; grants equal.
+- reconcile (skill data-loss-verification): no `error`, `lost` = 0, `ok` true.
 - `/opt/raiden/.claude/skills/pitr-restore/scripts/pitr_cleanup.sh <CLONE_DIR>` (fast stop + delete clone);
   keep the .dump until the report is written, then it may be deleted from /var/lib/raiden/work.
 

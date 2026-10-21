@@ -90,6 +90,9 @@ async def run_session(
                 {"id": tc.id, "type": "function", "function": {"name": tc.function.name, "arguments": tc.function.arguments}}
                 for tc in msg.tool_calls
             ]
+        raw_items = getattr(msg, "raw_items", None)
+        if raw_items:  # Responses API: the model's own output items (reasoning included) go back with the next request
+            entry["raw_items"] = raw_items
         messages.append(entry)
         transcript.write(
             {

@@ -25,6 +25,7 @@ class Config:
     endpoint: str = ""
     deployment: str = "gpt-5.5"
     api_version: str = "2025-04-01-preview"
+    api: str = ""  # "chat" (chat completions) or "responses"; empty = the GPT-6 family needs responses, everything else chat
     reasoning_effort: str = "medium"
     price_in_per_m: float = 0.0   # optional, only used to estimate cost
     price_out_per_m: float = 0.0
@@ -37,8 +38,11 @@ class Config:
     max_turns: int = 60
     incident_timeout_s: float = 900.0
     evolve_enabled: bool = True
-    evolve_max_turns: int = 40
-    evolve_timeout_s: float = 600.0
+    evolve_max_turns: int = 60
+    evolve_timeout_s: float = 900.0
+    fortify_max_turns: int = 90          # the day-0 hardening session (raiden fortify): backup, replica, baseline, artifacts
+    fortify_timeout_s: float = 1200.0
+    standby_service: str = "pg-standby"  # systemd unit of the streaming replica rAIden builds (a normal user cannot start daemons itself)
     restart_budget_per_hour: int = 6
     forced_stop_after_s: float = 240.0      # a stuck 'deactivating' unit must be this old before pg_ctl stop -m immediate is allowed
     forced_stop_budget_per_hour: int = 1
@@ -64,6 +68,7 @@ class Config:
             endpoint=e("RAIDEN_AOAI_ENDPOINT", base.endpoint),
             deployment=e("RAIDEN_AOAI_DEPLOYMENT", base.deployment),
             api_version=e("RAIDEN_AOAI_API_VERSION", base.api_version),
+            api=e("RAIDEN_AOAI_API", base.api),
             reasoning_effort=e("RAIDEN_REASONING_EFFORT", base.reasoning_effort),
             price_in_per_m=float(e("RAIDEN_PRICE_IN_PER_M", base.price_in_per_m)),
             price_out_per_m=float(e("RAIDEN_PRICE_OUT_PER_M", base.price_out_per_m)),
@@ -77,6 +82,9 @@ class Config:
             evolve_enabled=e("RAIDEN_EVOLVE", "1") not in ("0", "false", "no"),
             evolve_max_turns=int(e("RAIDEN_EVOLVE_MAX_TURNS", base.evolve_max_turns)),
             evolve_timeout_s=float(e("RAIDEN_EVOLVE_TIMEOUT_S", base.evolve_timeout_s)),
+            fortify_max_turns=int(e("RAIDEN_FORTIFY_MAX_TURNS", base.fortify_max_turns)),
+            fortify_timeout_s=float(e("RAIDEN_FORTIFY_TIMEOUT_S", base.fortify_timeout_s)),
+            standby_service=e("RAIDEN_STANDBY_SERVICE", base.standby_service),
             restart_budget_per_hour=int(e("RAIDEN_RESTART_BUDGET", base.restart_budget_per_hour)),
             forced_stop_after_s=float(e("RAIDEN_FORCED_STOP_AFTER_S", base.forced_stop_after_s)),
             forced_stop_budget_per_hour=int(e("RAIDEN_FORCED_STOP_BUDGET", base.forced_stop_budget_per_hour)),
@@ -99,6 +107,14 @@ class Config:
     @property
     def memory_dir(self) -> Path:
         return self.state_dir / "memory"
+
+    @property
+    def replica_dir(self) -> Path:
+        return self.work_dir / "replica"
+
+    @property
+    def protections_path(self) -> Path:
+        return self.memory_dir / "protections.list"
 
     @property
     def lessons_path(self) -> Path:
@@ -127,6 +143,11 @@ class Config:
     @property
     def restarts_path(self) -> Path:
         return self.state_dir / "restarts.jsonl"
+
+    @property
+    def use_responses(self) -> bool:
+        """GPT-6 models refuse function tools together with reasoning on chat completions: they need the Responses API."""
+        return (self.api or ("responses" if self.deployment.startswith("gpt-6") else "chat")) == "responses"
 
     @property
     def skills_dir(self) -> Path:

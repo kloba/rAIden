@@ -81,11 +81,12 @@ A signal 9 in the PG log WITHOUT a matching OOM line was sent by someone/somethi
 | `missing chunk number`, `unexpected chunk number`, `invalid page in block`, `could not read block`, `page verification failed`, XX001/XX002, checksum_failures > 0 | toast-corruption |
 | `relation "..." does not exist` (42P01) for an app table, DROP/TRUNCATE in the log, need data as of earlier time | pitr-restore |
 | any incident that may have touched data; is anything lost? | data-loss-verification |
-| `too many clients already`, `remaining connection slots are reserved`, idle-in-transaction pile-up | connection-storm |
+| `too many clients already`, `remaining connection slots are reserved`, idle-in-transaction pile-up; `still waiting for ...Lock on relation` (writers frozen behind a DDL statement) | connection-storm |
 | `No space left on device`, 53100, `archive command failed`, pg_wal growing | disk-space-wal |
 | `must be vacuumed within`, `not accepting commands ... wraparound`, 54000 xid limits | wraparound-vacuum |
 | server won't start due to config | crash-loop-rca (remediation ladder: fix exact source file, restart once) |
 | `systemctl restart/stop` never returns, unit `deactivating`, `FATAL: the database system is shutting down` for minutes, controldata `in crash recovery` | stuck-shutdown |
+| `ALTER SYSTEM is not allowed`, `raiden protection:` errors, a replica / slot / backup question | fortify-database (state of the hardening is in /var/lib/raiden/memory/protections.list) |
 | incident stable | hardening-after-incident PART A (report + lessons) |
 
 Record in notes.md: first error timestamp, symptom signature, chosen skill and why.
