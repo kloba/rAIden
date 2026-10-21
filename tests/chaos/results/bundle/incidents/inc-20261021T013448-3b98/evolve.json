@@ -1,0 +1,30 @@
+{
+  "incident": "inc-20261021T013448-3b98",
+  "finished_at": "2026-10-21T01:40:34.820Z",
+  "resolution": "resolved",
+  "summary": "Preserved existing P3 and proved arena-owned scratch DROP rejected with 42501 and clean rollback. Added validated read-only DROP/rejection correlation patrol and sharpened runbook. All other patrol checks OK; recent rejected attempt intentionally WARN. Oracle verified 81,236 acknowledged commits, zero loss/corruption; no restart or configuration changes.",
+  "turns": 22,
+  "tool_calls": 32,
+  "denied_calls": 0,
+  "total_cost_usd": 0.0,
+  "changes": [
+    {
+      "path": "/opt/raiden/.claude/skills/learned-table-drop-guard/SKILL.md",
+      "action": "modified"
+    },
+    {
+      "path": "/opt/raiden/.claude/skills/learned-table-drop-guard/scripts/ddl_attempts.py",
+      "action": "added"
+    },
+    {
+      "path": "/opt/raiden/checks.d/88-ddl-attempts.sh",
+      "action": "added"
+    }
+  ],
+  "duration_s": 225.7,
+  "usage": {
+    "prompt_tokens": 626777,
+    "completion_tokens": 7998,
+    "cached_tokens": 595068
+  }
+}

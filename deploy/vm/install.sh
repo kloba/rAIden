@@ -23,13 +23,15 @@ chown -R raiden:raiden /opt/raiden/.claude /opt/raiden/checks.d
 chmod +x /opt/raiden/checks.d/*.sh /opt/raiden/.claude/skills/*/scripts/* 2>/dev/null || true
 
 # arena: the oracle is visible to the agent, the referee and the attacks are not
-install -m 755 -o root -g root "$SRC/arena/ledger.py" /opt/arena/ledger.py
-install -m 700 -o root -g root "$SRC/arena/battle.py" /var/lib/arena-private/battle.py
-rsync -a --delete "$SRC/arena/scenarios/" /var/lib/arena-private/scenarios/
+install -m 755 -o root -g root "$SRC/tests/chaos/ledger.py" /opt/arena/ledger.py
+install -m 700 -o root -g root "$SRC/tests/chaos/battle.py" /var/lib/arena-private/battle.py
+rsync -a --delete "$SRC/tests/chaos/scenarios/" /var/lib/arena-private/scenarios/
 chown -R root:root /var/lib/arena-private
 chmod -R go-rwx /var/lib/arena-private
 
 install -m 644 "$SRC/deploy/vm/raiden.service" /etc/systemd/system/raiden.service
+install -m 644 "$SRC/deploy/vm/raiden-fortify.service" /etc/systemd/system/raiden-fortify.service
+install -m 644 "$SRC/deploy/vm/pg-standby.service" /etc/systemd/system/pg-standby.service
 if [ ! -f /etc/raiden/raiden.env ]; then
   echo "NOTE: /etc/raiden/raiden.env is missing - create it from deploy/vm/raiden.env.example"
 fi

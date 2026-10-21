@@ -1,0 +1,19 @@
+{"t": "2026-10-21T01:25:08.146Z", "tool": "load_skill", "cmd": "pg-triage", "denied": false}
+{"t": "2026-10-21T01:25:12.474Z", "tool": "pg_probe", "cmd": "", "denied": false}
+{"t": "2026-10-21T01:25:12.474Z", "tool": "load_skill", "cmd": "learned-lock-queue", "denied": false}
+{"t": "2026-10-21T01:25:12.474Z", "tool": "bash", "cmd": "/opt/raiden/.claude/skills/pg-triage/scripts/snapshot.sh 10 | tee \"$RAIDEN_INCIDENT_DIR/snapshot.txt\"", "denied": false}
+{"t": "2026-10-21T01:25:12.474Z", "tool": "read_file", "cmd": "/var/lib/raiden/memory/protections.list", "denied": false}
+{"t": "2026-10-21T01:25:12.474Z", "tool": "read_file", "cmd": "/var/lib/raiden/memory/evolution.md", "denied": false}
+{"t": "2026-10-21T01:25:22.987Z", "tool": "bash", "cmd": "PGCONNECT_TIMEOUT=3 psql -X -d ledger -c \"SELECT pid,usename,application_name,state,now()-state_change AS state_age,wait_event_type,pg_blocking_pids(pid),left(query,200) FROM pg_stat_activity WHERE datname='ledger' ORDER BY xact_start NULLS LAST; SELECT oid,datname FROM pg_database WHERE oid=16434; SELECT to_regclass('public.scratch_p5_queue_probe') AS scratch_table; SELECT rolname,rolsuper,rolcanlogin,rolconfig FROM pg_roles WHERE rolname IN ('analyst','migrator','scratch_p5_analyst','scratch_p5_migrator'); SELECT * FROM pg_db_role_setting WHERE setdatabase<>0;\"; bash /opt/raide", "truncated": true, "denied": false}
+{"t": "2026-10-21T01:25:22.987Z", "tool": "bash", "cmd": "jq -Rr 'fromjson? | select(.timestamp >= \"2026-10-21 01:22:10\" and .timestamp <= \"2026-10-21 01:23:00\" and (.pid==49135 or .pid==49258 or .pid==49134 or .pid==49257)) | {timestamp,pid,user,dbname,application_name,message,detail,statement,state_code}' /var/log/postgresql/raiden-20261021.json | tee \"$RAIDEN_INCIDENT_DIR/probe-log-evidence.txt\"", "denied": false}
+{"t": "2026-10-21T01:25:22.987Z", "tool": "read_file", "cmd": "/var/lib/raiden/work/prove_lock_queue_defaults.py", "denied": false}
+{"t": "2026-10-21T01:25:22.987Z", "tool": "load_skill", "cmd": "hardening-after-incident", "denied": false}
+{"t": "2026-10-21T01:25:33.872Z", "tool": "write_file", "cmd": "$RAIDEN_INCIDENT_DIR/notes.md", "truncated": true, "denied": false}
+{"t": "2026-10-21T01:25:41.027Z", "tool": "bash", "cmd": "/opt/raiden/venv/bin/python /opt/arena/ledger.py reconcile --json | tee \"$RAIDEN_INCIDENT_DIR/reconcile.json\"; PGCONNECT_TIMEOUT=3 psql -X -d postgres -c \"SELECT name,setting FROM pg_settings WHERE name IN ('fsync','full_page_writes','synchronous_commit','allow_alter_system'); SELECT count(*) AS config_errors FROM pg_file_settings WHERE error IS NOT NULL;\"", "denied": false}
+{"t": "2026-10-21T01:25:41.027Z", "tool": "bash", "cmd": "PGCONNECT_TIMEOUT=3 psql -X -At -d ledger -c \"SELECT clock_timestamp(),count(*),max(id) FROM public.entries;\"; sleep 35; PGCONNECT_TIMEOUT=3 psql -X -At -d ledger -c \"SELECT clock_timestamp(),count(*),max(id) FROM public.entries;\"; bash /opt/raiden/checks.d/89-lock-queue.sh; jq -Rr 'fromjson? | select(.timestamp >= \"2026-10-21 01:23:00\" and ((.message|test(\"still waiting for .*Lock|canceling statement due to lock timeout\")))) | [.timestamp,.user,.application_name,.message] | @tsv' /var/log/postgresql/raiden-20261021.json", "denied": false}
+{"t": "2026-10-21T01:25:41.027Z", "tool": "read_file", "cmd": "/var/lib/raiden/memory/lessons.md", "denied": false}
+{"t": "2026-10-21T01:26:24.758Z", "tool": "pg_probe", "cmd": "", "denied": false}
+{"t": "2026-10-21T01:26:57.438Z", "tool": "write_file", "cmd": "$RAIDEN_INCIDENT_DIR/report.md", "truncated": true, "denied": false}
+{"t": "2026-10-21T01:26:59.692Z", "tool": "bash", "cmd": "cp /var/lib/raiden/memory/lessons.md \"$RAIDEN_INCIDENT_DIR/lessons-before.md\"", "denied": false}
+{"t": "2026-10-21T01:27:06.559Z", "tool": "edit_file", "cmd": "/var/lib/raiden/memory/lessons.md", "truncated": true, "denied": false}
+{"t": "2026-10-21T01:27:09.796Z", "tool": "finish", "cmd": "", "denied": false}

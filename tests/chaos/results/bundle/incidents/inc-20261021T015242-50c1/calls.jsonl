@@ -1,0 +1,20 @@
+{"t": "2026-10-21T01:52:44.505Z", "tool": "load_skill", "cmd": "pg-triage", "denied": false}
+{"t": "2026-10-21T01:52:47.851Z", "tool": "pg_probe", "cmd": "", "denied": false}
+{"t": "2026-10-21T01:52:47.851Z", "tool": "bash", "cmd": "/opt/raiden/.claude/skills/pg-triage/scripts/snapshot.sh 10 | tee \"$RAIDEN_INCIDENT_DIR/snapshot-initial.txt\"", "denied": false}
+{"t": "2026-10-21T01:52:47.851Z", "tool": "read_file", "cmd": "/var/lib/raiden/memory/protections.list", "denied": false}
+{"t": "2026-10-21T01:52:47.851Z", "tool": "read_file", "cmd": "/var/lib/raiden/memory/evolution.md", "denied": false}
+{"t": "2026-10-21T01:52:55.777Z", "tool": "load_skill", "cmd": "fortify-database", "denied": false}
+{"t": "2026-10-21T01:52:55.777Z", "tool": "load_skill", "cmd": "crash-loop-rca", "denied": false}
+{"t": "2026-10-21T01:52:55.777Z", "tool": "load_skill", "cmd": "hardening-after-incident", "denied": false}
+{"t": "2026-10-21T01:52:55.777Z", "tool": "bash", "cmd": "jq -Rr 'fromjson? | select(.timestamp >= \"2026-10-21 01:52:00\" and (.pid == 63242 or (.message|test(\"ALTER SYSTEM|pg_crash|SIGHUP|configuration file|terminated by signal|reinitializing\"))))' /var/log/postgresql/raiden-20261021.json; PGCONNECT_TIMEOUT=3 psql -X -d postgres -c \"SELECT name,setting,source,sourcefile,sourceline,pending_restart FROM pg_settings WHERE name IN ('allow_alter_system','shared_preload_libraries','fsync','full_page_writes','synchronous_commit'); SELECT sourcefile,sourceline,name,setting,applied,error FROM pg_file_settings WHERE name IN ('shared_preload_li", "truncated": true, "denied": false}
+{"t": "2026-10-21T01:53:06.890Z", "tool": "write_file", "cmd": "$RAIDEN_INCIDENT_DIR/notes.md", "truncated": true, "denied": false}
+{"t": "2026-10-21T01:53:14.317Z", "tool": "bash", "cmd": "/opt/raiden/venv/bin/python /opt/arena/ledger.py reconcile --json | tee \"$RAIDEN_INCIDENT_DIR/reconcile.json\"; sudo -n -u postgres /usr/lib/postgresql/18/bin/postgres -D /var/lib/postgresql/18/main -c config_file=/etc/postgresql/18/main/postgresql.conf -C shared_preload_libraries; /opt/raiden/.claude/skills/fortify-database/scripts/replica_status.sh; date -u +%FT%TZ", "denied": false}
+{"t": "2026-10-21T01:53:14.317Z", "tool": "bash", "cmd": "sleep 65; jq -Rr 'fromjson? | select(.timestamp >= \"2026-10-21 01:52:35\" and (.message|test(\"ALTER SYSTEM|pg_crash|SIGHUP|configuration file|terminated by signal|reinitializing|automatic recovery\"))) | [.timestamp,.pid,.error_severity,.message] | @tsv' /var/log/postgresql/raiden-20261021.json | tee \"$RAIDEN_INCIDENT_DIR/preload-observation.txt\"; PGCONNECT_TIMEOUT=3 psql -X -At -d postgres -c \"SELECT count(*) FROM pg_file_settings WHERE error IS NOT NULL; SELECT name,setting FROM pg_settings WHERE pending_restart;\"; date -u +%FT%TZ", "denied": false}
+{"t": "2026-10-21T01:53:14.317Z", "tool": "bash", "cmd": "grep -n -iE 'ALTER SYSTEM|pg_crash' /var/lib/raiden/memory/lessons.md; wc -l /var/lib/raiden/memory/lessons.md", "denied": false}
+{"t": "2026-10-21T01:54:26.797Z", "tool": "pg_probe", "cmd": "", "denied": false}
+{"t": "2026-10-21T01:54:26.797Z", "tool": "read_file", "cmd": "/var/lib/raiden/memory/lessons.md", "denied": false}
+{"t": "2026-10-21T01:54:26.797Z", "tool": "bash", "cmd": "cp -p /var/lib/raiden/memory/lessons.md \"$RAIDEN_INCIDENT_DIR/lessons.before.md\"", "denied": false}
+{"t": "2026-10-21T01:54:33.462Z", "tool": "edit_file", "cmd": "/var/lib/raiden/memory/lessons.md", "truncated": true, "denied": false}
+{"t": "2026-10-21T01:55:04.978Z", "tool": "write_file", "cmd": "$RAIDEN_INCIDENT_DIR/report.md", "truncated": true, "denied": false}
+{"t": "2026-10-21T01:55:10.449Z", "tool": "edit_file", "cmd": "$RAIDEN_INCIDENT_DIR/notes.md", "truncated": true, "denied": false}
+{"t": "2026-10-21T01:55:13.240Z", "tool": "finish", "cmd": "", "denied": false}

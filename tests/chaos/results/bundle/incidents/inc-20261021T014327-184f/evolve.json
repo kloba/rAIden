@@ -1,0 +1,30 @@
+{
+  "incident": "inc-20261021T014327-184f",
+  "finished_at": "2026-10-21T01:51:30.340Z",
+  "resolution": "resolved",
+  "summary": "Preserved existing P5 and re-proved exact waiting LOCK rejection in 3.000s plus 15s idle-transaction expiry on an isolated disposable cluster. Added validated read-only production lock-history patrol and sharpened runbook; expected historical WARN, all other checks OK. All 98144 acknowledged commits intact; no primary mutation, reload or restart. Evolution, report and lessons recorded.",
+  "turns": 25,
+  "tool_calls": 39,
+  "denied_calls": 0,
+  "total_cost_usd": 0.0,
+  "changes": [
+    {
+      "path": "/opt/raiden/.claude/skills/learned-lock-queue/SKILL.md",
+      "action": "modified"
+    },
+    {
+      "path": "/opt/raiden/.claude/skills/learned-lock-queue/scripts/lock_wait_history.py",
+      "action": "added"
+    },
+    {
+      "path": "/opt/raiden/checks.d/89-lock-wait-history.sh",
+      "action": "added"
+    }
+  ],
+  "duration_s": 251.5,
+  "usage": {
+    "prompt_tokens": 807764,
+    "completion_tokens": 8883,
+    "cached_tokens": 749644
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "incident": "inc-20261021T010712-42b2",
+  "finished_at": "2026-10-21T01:15:10.489Z",
+  "resolution": "resolved",
+  "summary": "Registered reporting P4 cap/timeouts and proved equivalent scratch admission rejects the eleventh login. Added validated policy-drift/occupancy detector and learned runbook; all 14 patrol checks OK, 41,891 acknowledged commits verified intact. No restart or durability weakening; evolution ends with required PROTECTION line.",
+  "turns": 17,
+  "tool_calls": 28,
+  "denied_calls": 0,
+  "total_cost_usd": 0.0,
+  "changes": [
+    {
+      "path": "/opt/raiden/.claude/skills/learned-reporting-limits/SKILL.md",
+      "action": "added"
+    },
+    {
+      "path": "/opt/raiden/checks.d/89-reporting-limits.sh",
+      "action": "added"
+    }
+  ],
+  "duration_s": 193.0,
+  "usage": {
+    "prompt_tokens": 457955,
+    "completion_tokens": 7596,
+    "cached_tokens": 427154
+  }
+}

@@ -1,0 +1,11 @@
+baseline-config|2026-10-21T00:49:04Z|allow_alter_system=off, slot WAL cap 4GB, idle-in-transaction timeout 5min (conf.d/98-raiden-baseline.conf)
+replica|2026-10-21T00:49:04Z|streaming replica raiden_replica on port 5434 (unit pg-standby), monitored by 85-replica.sh
+backup|2026-10-21T00:49:04Z|verified base backup 20261021T004705 in /var/backups/postgresql/base; freshness checked by 86-baseline.sh
+extension-allowlist|2026-10-21T00:56:00Z|event trigger raiden_extension_allowlist: only amcheck and plpgsql may be created in ledger; proof rejected pg_surgery including postgres role
+protected-tables|2026-10-21T01:03:19Z|event trigger raiden_protect_tables: registered tables in ledger cannot be dropped; public.entries registered; scratch proof rejected arena owner DROP TABLE
+protected-tables|2026-10-21T01:39:34Z|existing P3 preserved after inc-3b98; transactional arena-owned scratch DROP reproof rejected with 42501; rollback and residue absence verified
+role-limits|2026-10-21T01:13:00Z|role reporting: connection limit 10, idle session 2min, idle-in-transaction 15s; equivalent scratch login 11 rejected
+lock-timeout|2026-10-21T01:24:00Z|role migrator: lock_timeout 3s; role analyst: idle-in-transaction 15s; scratch LOCK canceled and fresh equivalent idle login expired
+lock-timeout|2026-10-21T01:48:52Z|role migrator: existing P5 preserved after inc-184f; distinct-system disposable fresh-login reproof canceled exact scratch LOCK in 3.000s (55P03), analyst idle transaction expired at 15s; no primary proof writes
+scratch-proof-primary-refusal|2026-10-21T01:30:42Z|prove_lock_queue_defaults.py refuses missing disposable target or primary system identifier before SQL writes; default and explicit-primary refusal proven; fingerprint patrol
+pin-preload|2026-10-21T02:01:56Z|shared_preload_libraries pinned to 'pg_stat_statements' (conf.d/99-raiden-pin-preload.conf); retained-copy exact 50-experiment and 90-attacker proof plus positive control passed

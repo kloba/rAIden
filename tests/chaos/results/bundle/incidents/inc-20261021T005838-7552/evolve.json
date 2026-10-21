@@ -1,0 +1,30 @@
+{
+  "incident": "inc-20261021T005838-7552",
+  "finished_at": "2026-10-21T01:05:50.620Z",
+  "resolution": "resolved",
+  "summary": "Installed and proved ledger table-drop protection, including rejection for arena-owned scratch tables. Added validated table/guard drift patrol and learned runbook; all 13 patrol checks OK, all 26,993 acknowledged commits intact, no PostgreSQL restart. Evidence and scope limitations recorded in evolve report and evolution.md.",
+  "turns": 21,
+  "tool_calls": 32,
+  "denied_calls": 1,
+  "total_cost_usd": 0.0,
+  "changes": [
+    {
+      "path": "/opt/raiden/.claude/skills/learned-table-drop-guard/SKILL.md",
+      "action": "added"
+    },
+    {
+      "path": "/opt/raiden/checks.d/88-table-guard.sh",
+      "action": "added"
+    },
+    {
+      "path": "/opt/raiden/checks.d/88-table-guard.sql",
+      "action": "added"
+    }
+  ],
+  "duration_s": 201.8,
+  "usage": {
+    "prompt_tokens": 482074,
+    "completion_tokens": 7774,
+    "cached_tokens": 455352
+  }
+}

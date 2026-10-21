@@ -1,0 +1,1169 @@
+{
+  "started_at": "2026-10-21T00:45:53.704Z",
+  "finished_at": "2026-10-21T02:07:13.290Z",
+  "duration_s": 4879,
+  "rounds": [
+    {
+      "round": "fortify",
+      "title": "ROUND 0",
+      "move": "FORTIFY",
+      "name": "rAIden hardens the database before the fight",
+      "won": true,
+      "fortify": true,
+      "attack_at": "2026-10-21T00:46:57.059Z",
+      "ended_at": "2026-10-21T00:50:27.976Z",
+      "seconds_total": 210.9,
+      "session_seconds": 210.6,
+      "outcome": "resolved",
+      "turns": 34,
+      "tool_calls": 34,
+      "denied_calls": 0,
+      "tokens": 417925,
+      "fortify_id": "fort-20261021T004657",
+      "artifacts_added": [
+        ".claude/skills/learned-replica-ops/SKILL.md",
+        "checks.d/85-replica.sh",
+        "checks.d/86-baseline.sh"
+      ],
+      "protections": [
+        "baseline-config|2026-10-21T00:49:04Z|allow_alter_system=off, slot WAL cap 4GB, idle-in-transaction timeout 5min (conf.d/98-raiden-baseline.conf)",
+        "replica|2026-10-21T00:49:04Z|streaming replica raiden_replica on port 5434 (unit pg-standby), monitored by 85-replica.sh",
+        "backup|2026-10-21T00:49:04Z|verified base backup 20261021T004705 in /var/backups/postgresql/base; freshness checked by 86-baseline.sh"
+      ],
+      "downtime": {
+        "crash_cycles": 0,
+        "db_down_s": 0,
+        "db_first_down_s": null,
+        "stable_after_s": null,
+        "db_down_intervals": [],
+        "app_longest_gap_s": 0.0,
+        "app_stall_s": 0,
+        "app_stalls": 0,
+        "probe_down_s": 0.0
+      },
+      "final_check": {
+        "backups": [
+          "20261021T004705"
+        ],
+        "pg_verifybackup": "backup successfully verified",
+        "replication": "streaming|0",
+        "replica_in_recovery": "t",
+        "slot": "raiden_replica active=true",
+        "allow_alter_system": "off",
+        "max_slot_wal_keep_size": "4GB",
+        "config_errors": "0",
+        "reconcile": {
+          "acked": 7182,
+          "ok": true,
+          "present": 7182,
+          "lost": 0,
+          "corrupt": 0,
+          "unreadable": 0,
+          "unrecorded_rows_in_db": 4,
+          "lost_sample": [],
+          "corrupt_sample": [],
+          "unreadable_sample": [],
+          "seconds": 0.2
+        }
+      },
+      "unit_rc": 0,
+      "restarts_used": 0
+    },
+    {
+      "round": "toast",
+      "title": "ROUND 1",
+      "move": "TOAST SNATCH",
+      "name": "TOAST chunks eaten",
+      "won": true,
+      "timed_out": false,
+      "attack_at": "2026-10-21T00:50:54.049Z",
+      "ended_at": "2026-10-21T00:57:52.057Z",
+      "seconds_to_wake": 10.7,
+      "seconds_to_first_clue": 16.2,
+      "seconds_to_oracle_ok": 89.1,
+      "downtime": {
+        "crash_cycles": 0,
+        "db_down_s": 0,
+        "db_first_down_s": null,
+        "stable_after_s": null,
+        "db_down_intervals": [],
+        "app_longest_gap_s": 0.0,
+        "app_stall_s": 0,
+        "app_stalls": 0,
+        "probe_down_s": 0.0
+      },
+      "incidents": [
+        {
+          "id": "inc-20261021T005104-7d61",
+          "outcome": "resolved",
+          "num_turns": 20,
+          "tool_calls": 31,
+          "denied_calls": 0,
+          "duration_ms": 170057,
+          "summary": "Recovered four unreadable ledger payloads from a verified PITR side clone. Scanner and whole-database amcheck clean; oracle verified all 11,208 acknowledged commits intact with zero lost, corrupt or unreadable rows. Primary remained online with durability unchanged and no restarts; report and lessons recorded.",
+          "recurrence_of": null,
+          "reason": "critical event: corruption x8"
+        }
+      ],
+      "recurrences": 0,
+      "guard_denials": 0,
+      "denied_rules": [],
+      "agent_tool_calls": 58,
+      "restarts_used": 0,
+      "restart_at_s": [],
+      "evolve_done_s": 379.1,
+      "tokens": 891885,
+      "evolution": [
+        {
+          "changes": [
+            {
+              "path": "/opt/raiden/.claude/skills/learned-extension-guard/SKILL.md",
+              "action": "added"
+            },
+            {
+              "path": "/opt/raiden/checks.d/87-extension-guard.sh",
+              "action": "added"
+            }
+          ],
+          "summary": "Installed and proved ledger extension allowlist: CREATE EXTENSION pg_surgery now fails, including postgres role. Added validated extension drift patrol and learned runbook; all 12 checks healthy and oracle confirms 16,654 acknowledged commits intact. No PostgreSQL restart or durability changes.",
+          "turns": 17
+        }
+      ],
+      "final_check": {
+        "reconcile": {
+          "acked": 18974,
+          "ok": true,
+          "present": 18974,
+          "lost": 0,
+          "corrupt": 0,
+          "unreadable": 0,
+          "unrecorded_rows_in_db": 16,
+          "lost_sample": [],
+          "corrupt_sample": [],
+          "unreadable_sample": [],
+          "seconds": 0.6
+        },
+        "since_last_ack_s": 0.0
+      },
+      "repeat_of": null,
+      "blocked": false,
+      "attack_output": "toast relation pg_toast.pg_toast_84508; killing chunk_seq=1 of chunk_ids ['91601', '91678', '91808', '91817'] at ['(9516,2)', '(9621,2)', '(9779,4)', '(9795,4)']\nreport query: ERROR:  unexpected chunk number 2 (expected 1) for toast value 91601 in pg_toast_84508\n"
+    },
+    {
+      "round": "pitr",
+      "title": "ROUND 2",
+      "move": "DROP KICK",
+      "name": "DROP TABLE, then point-in-time recovery",
+      "won": true,
+      "timed_out": false,
+      "attack_at": "2026-10-21T00:58:22.143Z",
+      "ended_at": "2026-10-21T01:06:31.607Z",
+      "seconds_to_wake": 16.1,
+      "seconds_to_first_clue": 21.5,
+      "seconds_to_oracle_ok": 106.4,
+      "downtime": {
+        "crash_cycles": 0,
+        "db_down_s": 0,
+        "db_first_down_s": null,
+        "stable_after_s": null,
+        "db_down_intervals": [],
+        "app_longest_gap_s": 102.9,
+        "app_stall_s": 101.9,
+        "app_stalls": 1,
+        "probe_down_s": 0.0
+      },
+      "incidents": [
+        {
+          "id": "inc-20261021T005838-7552",
+          "outcome": "resolved",
+          "num_turns": 17,
+          "tool_calls": 24,
+          "denied_calls": 0,
+          "duration_ms": 185460,
+          "summary": "Recovered public.entries via exclusive-XID PITR side clone and atomic table-only restore. Verified all 20,734 acknowledged commits present, zero lost/corrupt/unreadable rows, clean amcheck and healthy streaming replica. No primary restart or durability/protection weakening; destructive-DDL prevention deferred to evolve.",
+          "recurrence_of": null,
+          "reason": "critical event: missing_relation x287, destructive_ddl x1"
+        }
+      ],
+      "recurrences": 0,
+      "guard_denials": 1,
+      "denied_rules": [
+        "sql-drop-table"
+      ],
+      "agent_tool_calls": 56,
+      "restarts_used": 0,
+      "restart_at_s": [],
+      "evolve_done_s": 448.5,
+      "tokens": 817702,
+      "evolution": [
+        {
+          "changes": [
+            {
+              "path": "/opt/raiden/.claude/skills/learned-table-drop-guard/SKILL.md",
+              "action": "added"
+            },
+            {
+              "path": "/opt/raiden/checks.d/88-table-guard.sh",
+              "action": "added"
+            },
+            {
+              "path": "/opt/raiden/checks.d/88-table-guard.sql",
+              "action": "added"
+            }
+          ],
+          "summary": "Installed and proved ledger table-drop protection, including rejection for arena-owned scratch tables. Added validated table/guard drift patrol and learned runbook; all 13 patrol checks OK, all 26,993 acknowledged commits intact, no PostgreSQL restart. Evidence and scope limitations recorded in evolve report and evolution.md.",
+          "turns": 21
+        }
+      ],
+      "final_check": {
+        "reconcile": {
+          "acked": 29914,
+          "ok": true,
+          "present": 29914,
+          "lost": 0,
+          "corrupt": 0,
+          "unreadable": 0,
+          "unrecorded_rows_in_db": 24,
+          "lost_sample": [],
+          "corrupt_sample": [],
+          "unreadable_sample": [],
+          "seconds": 0.9
+        },
+        "since_last_ack_s": 0.0
+      },
+      "repeat_of": null,
+      "blocked": false,
+      "attack_output": "table dropped\n"
+    },
+    {
+      "round": "choke",
+      "title": "ROUND 3",
+      "move": "CHOKEHOLD",
+      "name": "a report job leaks every connection",
+      "won": true,
+      "timed_out": false,
+      "attack_at": "2026-10-21T01:07:01.749Z",
+      "ended_at": "2026-10-21T01:15:51.698Z",
+      "seconds_to_wake": 11.1,
+      "seconds_to_first_clue": 27.7,
+      "seconds_to_oracle_ok": 45.9,
+      "downtime": {
+        "crash_cycles": 0,
+        "db_down_s": 0,
+        "db_first_down_s": null,
+        "stable_after_s": null,
+        "db_down_intervals": [],
+        "app_longest_gap_s": 0.0,
+        "app_stall_s": 0,
+        "app_stalls": 0,
+        "probe_down_s": 0.0
+      },
+      "incidents": [
+        {
+          "id": "inc-20261021T010712-42b2",
+          "outcome": "resolved",
+          "num_turns": 16,
+          "tool_calls": 25,
+          "denied_calls": 0,
+          "duration_ms": 239504,
+          "summary": "Capped unlimited reporting fan-out at 10 connections with idle timeouts and disconnected 92 idle reporting clients. No new connection-exhaustion errors for over two minutes; application writes recovered without restart. Oracle verified all 35,595 acknowledged commits intact; report and lesson saved.",
+          "recurrence_of": null,
+          "reason": "critical event: resource x2"
+        }
+      ],
+      "recurrences": 0,
+      "guard_denials": 0,
+      "denied_rules": [],
+      "agent_tool_calls": 53,
+      "restarts_used": 0,
+      "restart_at_s": [],
+      "evolve_done_s": 488.7,
+      "tokens": 800190,
+      "evolution": [
+        {
+          "changes": [
+            {
+              "path": "/opt/raiden/.claude/skills/learned-reporting-limits/SKILL.md",
+              "action": "added"
+            },
+            {
+              "path": "/opt/raiden/checks.d/89-reporting-limits.sh",
+              "action": "added"
+            }
+          ],
+          "summary": "Registered reporting P4 cap/timeouts and proved equivalent scratch admission rejects the eleventh login. Added validated policy-drift/occupancy detector and learned runbook; all 14 patrol checks OK, 41,891 acknowledged commits verified intact. No restart or durability weakening; evolution ends with required PROTECTION line.",
+          "turns": 17
+        }
+      ],
+      "final_check": {
+        "app_can_connect": true,
+        "client_backends": "6",
+        "reporting_sessions": "0",
+        "max_connections": "100",
+        "reconcile": {
+          "acked": 44647,
+          "ok": true,
+          "present": 44647,
+          "lost": 0,
+          "corrupt": 0,
+          "unreadable": 0,
+          "unrecorded_rows_in_db": 40,
+          "lost_sample": [],
+          "corrupt_sample": [],
+          "unreadable_sample": [],
+          "seconds": 1.4
+        },
+        "since_last_ack_s": 0.0
+      },
+      "repeat_of": null,
+      "blocked": false,
+      "attack_output": "ATTACK_LANDED: FLOOD_ON: 92 idle connections held by role reporting; the server answers: remaining connection slots are reserved for roles with the SUPERUSER attribute\n"
+    },
+    {
+      "round": "lock",
+      "title": "ROUND 4",
+      "move": "ICE LOCK",
+      "name": "a forgotten transaction and an ALTER TABLE freeze the app",
+      "won": true,
+      "timed_out": false,
+      "attack_at": "2026-10-21T01:16:21.894Z",
+      "ended_at": "2026-10-21T01:32:36.388Z",
+      "seconds_to_wake": 9.5,
+      "seconds_to_first_clue": 15.2,
+      "seconds_to_oracle_ok": 42.5,
+      "downtime": {
+        "crash_cycles": 0,
+        "db_down_s": 0,
+        "db_first_down_s": null,
+        "stable_after_s": null,
+        "db_down_intervals": [],
+        "app_longest_gap_s": 26.2,
+        "app_stall_s": 25.2,
+        "app_stalls": 1,
+        "probe_down_s": 0.0
+      },
+      "incidents": [
+        {
+          "id": "inc-20261021T011631-7c80",
+          "outcome": "resolved",
+          "num_turns": 14,
+          "tool_calls": 22,
+          "denied_calls": 0,
+          "duration_ms": 226539,
+          "summary": "Canceled waiting migrator lock and terminated idle analyst blocker, draining ledger queue after ~26 seconds. Applied analyst 15s idle-transaction and migrator 3s lock timeouts; no restart. Over two minutes without new waits; oracle verified all 49,552 acknowledged commits intact.",
+          "recurrence_of": null,
+          "reason": "critical event: lock_queue x6"
+        },
+        {
+          "id": "inc-20261021T012504-bb45",
+          "outcome": "resolved",
+          "num_turns": 10,
+          "tool_calls": 19,
+          "denied_calls": 0,
+          "duration_ms": 124858,
+          "summary": "Both lock alerts were expected isolated P5 scratch-proof timeouts, not production lock queues. Verified scratch cleanup, intact role protections, ongoing writes and all 59,676 acknowledged commits present with zero loss/corruption. No database changes or restart needed.",
+          "recurrence_of": null,
+          "reason": "critical event: lock_queue x2, error x2"
+        }
+      ],
+      "recurrences": 0,
+      "guard_denials": 0,
+      "denied_rules": [],
+      "agent_tool_calls": 113,
+      "restarts_used": 0,
+      "restart_at_s": [],
+      "evolve_done_s": 521.8,
+      "tokens": 1918516,
+      "evolution": [
+        {
+          "changes": [
+            {
+              "path": "/opt/raiden/.claude/skills/learned-lock-queue/SKILL.md",
+              "action": "added"
+            },
+            {
+              "path": "/opt/raiden/checks.d/89-lock-queue.sh",
+              "action": "added"
+            }
+          ],
+          "summary": "Registered P5 and proved equivalent fresh-logins cancel migrator LOCK after 3.001s and expire idle analyst transactions at 15s. Added validated lock-chain/default-drift patrol and learned-lock-queue runbook; all 15 checks OK, oracle verified 56,780 acknowledged commits intact. No restart, authentication change or durability weakening.",
+          "turns": 23
+        },
+        {
+          "changes": [
+            {
+              "path": "/opt/raiden/.claude/skills/learned-lock-queue/SKILL.md",
+              "action": "modified"
+            },
+            {
+              "path": "/opt/raiden/.claude/skills/learned-scratch-proof-alert/SKILL.md",
+              "action": "added"
+            },
+            {
+              "path": "/opt/raiden/checks.d/89-scratch-proof-guard.sh",
+              "action": "added"
+            },
+            {
+              "path": "/opt/raiden/checks.d/90-protections.sh",
+              "action": "modified"
+            }
+          ],
+          "summary": "Exact alert-producing scratch P5 helper now refuses primary before writes; original and explicit-primary invocations proved rejected. Added validated fingerprint/residue patrol and provenance-aware runbook; all 16 checks OK, 67,481 acknowledged commits verified intact. Existing protections/logging preserved; no reload or restart. Evolution/report/lessons written.",
+          "turns": 27
+        }
+      ],
+      "final_check": {
+        "ungranted_relation_locks": "0",
+        "idle_in_transaction": "0",
+        "reconcile": {
+          "acked": 70662,
+          "ok": true,
+          "present": 70662,
+          "lost": 0,
+          "corrupt": 0,
+          "unreadable": 0,
+          "unrecorded_rows_in_db": 56,
+          "lost_sample": [],
+          "corrupt_sample": [],
+          "unreadable_sample": [],
+          "seconds": 2.2
+        },
+        "since_last_ack_s": 0.0
+      },
+      "repeat_of": null,
+      "blocked": false,
+      "attack_output": "ATTACK_LANDED: ICE_LOCK_ON: LOCK TABLE public.entries has waited 25 s behind an idle transaction of role analyst; every INSERT of the application is queued behind it\n"
+    },
+    {
+      "round": "toast2",
+      "title": "SECOND CONTACT",
+      "move": "TOAST SNATCH",
+      "name": "TOAST attack again, same move",
+      "won": true,
+      "timed_out": false,
+      "attack_at": "2026-10-21T01:33:06.671Z",
+      "ended_at": "2026-10-21T01:34:11.648Z",
+      "seconds_to_wake": null,
+      "seconds_to_first_clue": null,
+      "seconds_to_oracle_ok": null,
+      "downtime": {
+        "crash_cycles": 0,
+        "db_down_s": 0,
+        "db_first_down_s": null,
+        "stable_after_s": null,
+        "db_down_intervals": [],
+        "app_longest_gap_s": 0.0,
+        "app_stall_s": 0,
+        "app_stalls": 0,
+        "probe_down_s": 0.0
+      },
+      "incidents": [],
+      "recurrences": 0,
+      "guard_denials": 0,
+      "denied_rules": [],
+      "agent_tool_calls": 0,
+      "restarts_used": 0,
+      "restart_at_s": [],
+      "evolve_done_s": null,
+      "tokens": 0,
+      "evolution": [],
+      "final_check": {
+        "reconcile": {
+          "acked": 73168,
+          "ok": true,
+          "present": 73168,
+          "lost": 0,
+          "corrupt": 0,
+          "unreadable": 0,
+          "unrecorded_rows_in_db": 60,
+          "lost_sample": [],
+          "corrupt_sample": [],
+          "unreadable_sample": [],
+          "seconds": 2.3
+        },
+        "since_last_ack_s": 0.0,
+        "pg_surgery_installed": "0"
+      },
+      "repeat_of": "toast",
+      "blocked": true,
+      "pre_empted": false,
+      "evidence": {
+        "blocked_error": "raiden protection: extension \"pg_surgery\" is not on the allowlist (table raiden.allowed_extensions)",
+        "attack_output": "toast relation pg_toast.pg_toast_104379; killing chunk_seq=1 of chunk_ids ['175159', '175304', '175360', '175408'] at ['(96950,3)', '(97144,2)', '(97221,2)', '(97282,4)']\nATTACK_BLOCKED: raiden protection: extension \"pg_surgery\" is not on the allowlist (table raiden.allowed_extensions)\n",
+        "reconcile": {
+          "acked": 71852,
+          "ok": true,
+          "present": 71852,
+          "lost": 0,
+          "corrupt": 0,
+          "unreadable": 0,
+          "unrecorded_rows_in_db": 60,
+          "lost_sample": [],
+          "corrupt_sample": [],
+          "unreadable_sample": [],
+          "seconds": 2.3
+        },
+        "since_last_ack_s": 0.0,
+        "pg_surgery_installed": "0"
+      },
+      "attack_output": "toast relation pg_toast.pg_toast_104379; killing chunk_seq=1 of chunk_ids ['175159', '175304', '175360', '175408'] at ['(96950,3)', '(97144,2)', '(97221,2)', '(97282,4)']\nATTACK_BLOCKED: raiden protection: extension \"pg_surgery\" is not on the allowlist (table raiden.allowed_extensions)\n",
+      "blocked_error": "raiden protection: extension \"pg_surgery\" is not on the allowlist (table raiden.allowed_extensions)"
+    },
+    {
+      "round": "drop2",
+      "title": "SECOND CONTACT",
+      "move": "DROP KICK",
+      "name": "DROP TABLE again, same move",
+      "won": true,
+      "timed_out": false,
+      "attack_at": "2026-10-21T01:34:41.940Z",
+      "ended_at": "2026-10-21T01:41:06.552Z",
+      "seconds_to_wake": 6.6,
+      "seconds_to_first_clue": null,
+      "seconds_to_oracle_ok": null,
+      "downtime": {
+        "crash_cycles": 0,
+        "db_down_s": 0,
+        "db_first_down_s": null,
+        "stable_after_s": null,
+        "db_down_intervals": [],
+        "app_longest_gap_s": 0.0,
+        "app_stall_s": 0,
+        "app_stalls": 0,
+        "probe_down_s": 0.0
+      },
+      "incidents": [
+        {
+          "id": "inc-20261021T013448-3b98",
+          "outcome": "resolved",
+          "num_turns": 10,
+          "tool_calls": 17,
+          "denied_calls": 0,
+          "duration_ms": 75474,
+          "summary": "Existing protected-table guard rejected arena DROP in 3ms. Table and protections intact; all 74,948 acknowledged commits verified with zero loss, corruption or unreadable rows. No database changes or restart needed.",
+          "recurrence_of": null,
+          "reason": "critical event: destructive_ddl x1"
+        }
+      ],
+      "recurrences": 0,
+      "guard_denials": 0,
+      "denied_rules": [],
+      "agent_tool_calls": 49,
+      "restarts_used": 0,
+      "restart_at_s": [],
+      "evolve_done_s": 352.9,
+      "tokens": 810295,
+      "evolution": [
+        {
+          "changes": [
+            {
+              "path": "/opt/raiden/.claude/skills/learned-table-drop-guard/SKILL.md",
+              "action": "modified"
+            },
+            {
+              "path": "/opt/raiden/.claude/skills/learned-table-drop-guard/scripts/ddl_attempts.py",
+              "action": "added"
+            },
+            {
+              "path": "/opt/raiden/checks.d/88-ddl-attempts.sh",
+              "action": "added"
+            }
+          ],
+          "summary": "Preserved existing P3 and proved arena-owned scratch DROP rejected with 42501 and clean rollback. Added validated read-only DROP/rejection correlation patrol and sharpened runbook. All other patrol checks OK; recent rejected attempt intentionally WARN. Oracle verified 81,236 acknowledged commits, zero loss/corruption; no restart or configuration changes.",
+          "turns": 22
+        }
+      ],
+      "final_check": {
+        "reconcile": {
+          "acked": 84209,
+          "ok": true,
+          "present": 84209,
+          "lost": 0,
+          "corrupt": 0,
+          "unreadable": 0,
+          "unrecorded_rows_in_db": 72,
+          "lost_sample": [],
+          "corrupt_sample": [],
+          "unreadable_sample": [],
+          "seconds": 2.7
+        },
+        "since_last_ack_s": 0.0,
+        "entries_exists": "t"
+      },
+      "repeat_of": "pitr",
+      "blocked": true,
+      "pre_empted": false,
+      "evidence": {
+        "blocked_error": "raiden protection: table public.entries is protected and cannot be dropped",
+        "attack_output": "ATTACK_BLOCKED: raiden protection: table public.entries is protected and cannot be dropped\n",
+        "reconcile": {
+          "acked": 74360,
+          "ok": true,
+          "present": 74360,
+          "lost": 0,
+          "corrupt": 0,
+          "unreadable": 0,
+          "unrecorded_rows_in_db": 64,
+          "lost_sample": [],
+          "corrupt_sample": [],
+          "unreadable_sample": [],
+          "seconds": 2.4
+        },
+        "since_last_ack_s": 0.0,
+        "entries_exists": "t"
+      },
+      "attack_output": "ATTACK_BLOCKED: raiden protection: table public.entries is protected and cannot be dropped\n",
+      "blocked_error": "raiden protection: table public.entries is protected and cannot be dropped"
+    },
+    {
+      "round": "choke2",
+      "title": "SECOND CONTACT",
+      "move": "CHOKEHOLD",
+      "name": "the report job floods again, same move",
+      "won": true,
+      "timed_out": false,
+      "attack_at": "2026-10-21T01:41:36.885Z",
+      "ended_at": "2026-10-21T01:42:45.261Z",
+      "seconds_to_wake": null,
+      "seconds_to_first_clue": null,
+      "seconds_to_oracle_ok": null,
+      "downtime": {
+        "crash_cycles": 0,
+        "db_down_s": 0,
+        "db_first_down_s": null,
+        "stable_after_s": null,
+        "db_down_intervals": [],
+        "app_longest_gap_s": 0.0,
+        "app_stall_s": 0,
+        "app_stalls": 0,
+        "probe_down_s": 0.0
+      },
+      "incidents": [],
+      "recurrences": 0,
+      "guard_denials": 0,
+      "denied_rules": [],
+      "agent_tool_calls": 0,
+      "restarts_used": 0,
+      "restart_at_s": [],
+      "evolve_done_s": null,
+      "tokens": 0,
+      "evolution": [],
+      "final_check": {
+        "app_can_connect": true,
+        "client_backends": "6",
+        "reporting_sessions": "0",
+        "max_connections": "100",
+        "reconcile": {
+          "acked": 86820,
+          "ok": true,
+          "present": 86820,
+          "lost": 0,
+          "corrupt": 0,
+          "unreadable": 0,
+          "unrecorded_rows_in_db": 74,
+          "lost_sample": [],
+          "corrupt_sample": [],
+          "unreadable_sample": [],
+          "seconds": 2.8
+        },
+        "since_last_ack_s": 0.0
+      },
+      "repeat_of": "choke",
+      "blocked": true,
+      "pre_empted": false,
+      "evidence": {
+        "blocked_error": "too many connections for role \"reporting\"",
+        "attack_output": "ATTACK_BLOCKED: too many connections for role \"reporting\"\n",
+        "app_can_connect": true,
+        "client_backends": "6",
+        "reporting_sessions": "0",
+        "max_connections": "100",
+        "reconcile": {
+          "acked": 85430,
+          "ok": true,
+          "present": 85430,
+          "lost": 0,
+          "corrupt": 0,
+          "unreadable": 0,
+          "unrecorded_rows_in_db": 70,
+          "lost_sample": [],
+          "corrupt_sample": [],
+          "unreadable_sample": [],
+          "seconds": 2.7
+        },
+        "since_last_ack_s": 0.1
+      },
+      "attack_output": "ATTACK_BLOCKED: too many connections for role \"reporting\"\n",
+      "blocked_error": "too many connections for role \"reporting\""
+    },
+    {
+      "round": "lock2",
+      "title": "SECOND CONTACT",
+      "move": "ICE LOCK",
+      "name": "analyst and migration again, same move",
+      "won": true,
+      "timed_out": false,
+      "attack_at": "2026-10-21T01:43:15.603Z",
+      "ended_at": "2026-10-21T01:52:04.714Z",
+      "seconds_to_wake": 11.4,
+      "seconds_to_first_clue": null,
+      "seconds_to_oracle_ok": null,
+      "downtime": {
+        "crash_cycles": 0,
+        "db_down_s": 0,
+        "db_first_down_s": null,
+        "stable_after_s": null,
+        "db_down_intervals": [],
+        "app_longest_gap_s": 2.9,
+        "app_stall_s": 1.9,
+        "app_stalls": 1,
+        "probe_down_s": 0.0
+      },
+      "incidents": [
+        {
+          "id": "inc-20261021T014327-184f",
+          "outcome": "resolved",
+          "num_turns": 12,
+          "tool_calls": 19,
+          "denied_calls": 0,
+          "duration_ms": 186655,
+          "summary": "Existing 3s migrator lock timeout drained five production waiters; analyst client then disconnected, removing root blocker. No database intervention or restart needed. No recurrence for over two minutes; oracle verified all 91,540 acknowledged commits with zero loss, corruption or unreadable rows. Report and lesson recorded.",
+          "recurrence_of": null,
+          "reason": "critical event: lock_queue x6, error x1"
+        }
+      ],
+      "recurrences": 0,
+      "guard_denials": 0,
+      "denied_rules": [],
+      "agent_tool_calls": 58,
+      "restarts_used": 0,
+      "restart_at_s": [],
+      "evolve_done_s": 494.7,
+      "tokens": 1088385,
+      "evolution": [
+        {
+          "changes": [
+            {
+              "path": "/opt/raiden/.claude/skills/learned-lock-queue/SKILL.md",
+              "action": "modified"
+            },
+            {
+              "path": "/opt/raiden/.claude/skills/learned-lock-queue/scripts/lock_wait_history.py",
+              "action": "added"
+            },
+            {
+              "path": "/opt/raiden/checks.d/89-lock-wait-history.sh",
+              "action": "added"
+            }
+          ],
+          "summary": "Preserved existing P5 and re-proved exact waiting LOCK rejection in 3.000s plus 15s idle-transaction expiry on an isolated disposable cluster. Added validated read-only production lock-history patrol and sharpened runbook; expected historical WARN, all other checks OK. All 98144 acknowledged commits intact; no primary mutation, reload or restart. Evolution, report and lessons recorded.",
+          "turns": 25
+        }
+      ],
+      "final_check": {
+        "ungranted_relation_locks": "0",
+        "idle_in_transaction": "0",
+        "reconcile": {
+          "acked": 101597,
+          "ok": true,
+          "present": 101597,
+          "lost": 0,
+          "corrupt": 0,
+          "unreadable": 0,
+          "unrecorded_rows_in_db": 92,
+          "lost_sample": [],
+          "corrupt_sample": [],
+          "unreadable_sample": [],
+          "seconds": 3.5
+        },
+        "since_last_ack_s": 0.0
+      },
+      "repeat_of": "lock",
+      "blocked": true,
+      "pre_empted": false,
+      "evidence": {
+        "blocked_error": "the freeze was cut short: MIGRATION_FAILED after 3.0s: canceling statement due to lock timeout",
+        "attack_output": "ATTACK_BLOCKED: the freeze was cut short: MIGRATION_FAILED after 3.0s: canceling statement due to lock timeout\n",
+        "ungranted_relation_locks": "0",
+        "idle_in_transaction": "0",
+        "reconcile": {
+          "acked": 88092,
+          "ok": true,
+          "present": 88092,
+          "lost": 0,
+          "corrupt": 0,
+          "unreadable": 0,
+          "unrecorded_rows_in_db": 76,
+          "lost_sample": [],
+          "corrupt_sample": [],
+          "unreadable_sample": [],
+          "seconds": 2.9
+        },
+        "since_last_ack_s": 0.1
+      },
+      "attack_output": "ATTACK_BLOCKED: the freeze was cut short: MIGRATION_FAILED after 3.0s: canceling statement due to lock timeout\n",
+      "blocked_error": "the freeze was cut short: MIGRATION_FAILED after 3.0s: canceling statement due to lock timeout"
+    },
+    {
+      "round": "alter",
+      "title": "SECOND CONTACT",
+      "move": "ALTER UPPERCUT",
+      "name": "pg_crash tries a new move: ALTER SYSTEM",
+      "won": true,
+      "timed_out": false,
+      "attack_at": "2026-10-21T01:52:35.109Z",
+      "ended_at": "2026-10-21T01:56:33.709Z",
+      "seconds_to_wake": 7.5,
+      "seconds_to_first_clue": null,
+      "seconds_to_oracle_ok": null,
+      "downtime": {
+        "crash_cycles": 0,
+        "db_down_s": 0,
+        "db_first_down_s": null,
+        "stable_after_s": null,
+        "db_down_intervals": [],
+        "app_longest_gap_s": 0.0,
+        "app_stall_s": 0,
+        "app_stalls": 0,
+        "probe_down_s": 0.0
+      },
+      "incidents": [
+        {
+          "id": "inc-20261021T015242-50c1",
+          "outcome": "resolved",
+          "num_turns": 10,
+          "tool_calls": 20,
+          "denied_calls": 0,
+          "duration_ms": 150598,
+          "summary": "Existing ALTER SYSTEM guard rejected attempted pg_crash preload change; live and planned configuration intact, no crashes or restart, oracle verified all 103,549 acknowledged commits with zero loss/corruption/unreadable rows.",
+          "recurrence_of": null,
+          "reason": "error burst: error x1"
+        }
+      ],
+      "recurrences": 0,
+      "guard_denials": 0,
+      "denied_rules": [],
+      "agent_tool_calls": 20,
+      "restarts_used": 0,
+      "restart_at_s": [],
+      "evolve_done_s": null,
+      "tokens": 202489,
+      "evolution": [],
+      "final_check": {
+        "preload": "pg_stat_statements",
+        "crash_lines_45s": 0,
+        "reconcile": {
+          "acked": 108745,
+          "ok": true,
+          "present": 108745,
+          "lost": 0,
+          "corrupt": 0,
+          "unreadable": 0,
+          "unrecorded_rows_in_db": 100,
+          "lost_sample": [],
+          "corrupt_sample": [],
+          "unreadable_sample": [],
+          "seconds": 3.8
+        }
+      },
+      "repeat_of": null,
+      "blocked": true,
+      "pre_empted": false,
+      "evidence": {
+        "blocked_error": "ALTER SYSTEM is not allowed in this environment",
+        "attack_output": "ATTACK_BLOCKED: ALTER SYSTEM is not allowed in this environment\n",
+        "preload": "pg_stat_statements",
+        "crash_lines_45s": 0,
+        "reconcile": {
+          "acked": 102828,
+          "ok": true,
+          "present": 102828,
+          "lost": 0,
+          "corrupt": 0,
+          "unreadable": 0,
+          "unrecorded_rows_in_db": 92,
+          "lost_sample": [],
+          "corrupt_sample": [],
+          "unreadable_sample": [],
+          "seconds": 3.4
+        },
+        "source": "10-raiden-baseline.conf:5",
+        "experiment_file_present": false,
+        "auto_conf_pg_crash_lines": "0",
+        "allow_alter_system": "off"
+      },
+      "attack_output": "ATTACK_BLOCKED: ALTER SYSTEM is not allowed in this environment\n",
+      "blocked_error": "ALTER SYSTEM is not allowed in this environment"
+    },
+    {
+      "round": "crash",
+      "title": "FINAL ROUND",
+      "move": "SIGKILL STORM",
+      "name": "pg_crash storm",
+      "won": true,
+      "timed_out": false,
+      "attack_at": "2026-10-21T01:57:04.126Z",
+      "ended_at": "2026-10-21T02:04:51.309Z",
+      "seconds_to_wake": 15.8,
+      "seconds_to_first_clue": 21.1,
+      "seconds_to_oracle_ok": 91.0,
+      "downtime": {
+        "crash_cycles": 4,
+        "db_down_s": 3.1,
+        "db_first_down_s": 0.0,
+        "stable_after_s": 40.8,
+        "db_down_intervals": [
+          [
+            0.0,
+            1.3
+          ],
+          [
+            9.3,
+            9.6
+          ],
+          [
+            17.6,
+            17.9
+          ],
+          [
+            25.9,
+            26.2
+          ],
+          [
+            34.3,
+            34.6
+          ],
+          [
+            40.2,
+            40.8
+          ]
+        ],
+        "app_longest_gap_s": 1.4,
+        "app_stall_s": 0.4,
+        "app_stalls": 1,
+        "probe_down_s": 4.0
+      },
+      "incidents": [
+        {
+          "id": "inc-20261021T015719-597d",
+          "outcome": "resolved",
+          "num_turns": 15,
+          "tool_calls": 23,
+          "denied_calls": 0,
+          "duration_ms": 167456,
+          "summary": "Removed pg_crash from its conf.d source with one readiness-gated restart. Verified 60 seconds without new crashes, intact protections and streaming replica, and all 112720 acknowledged commits present with zero loss or corruption.",
+          "recurrence_of": null,
+          "reason": "critical event: crash x4"
+        }
+      ],
+      "recurrences": 0,
+      "guard_denials": 0,
+      "denied_rules": [],
+      "agent_tool_calls": 55,
+      "restarts_used": 1,
+      "restart_at_s": [
+        40.1
+      ],
+      "evolve_done_s": 435.3,
+      "tokens": 942449,
+      "evolution": [
+        {
+          "changes": [
+            {
+              "path": "/opt/raiden/.claude/skills/learned-preload-guard/SKILL.md",
+              "action": "added"
+            },
+            {
+              "path": "/opt/raiden/checks.d/89-preload-guard.sh",
+              "action": "added"
+            }
+          ],
+          "summary": "Pinned approved preload so the exact pg_crash conf.d experiment loses; retained-copy attack and positive-control proof passed. Added validated planned/live/config/module patrol and learned-preload-guard runbook. No restart; all 118983 acknowledged commits intact. Full patrol retains historical crash CRIT, with zero new session crashes. Report, lessons and evolution recorded.",
+          "turns": 22
+        }
+      ],
+      "final_check": {
+        "preload": "pg_stat_statements",
+        "crash_lines_45s": 0,
+        "reconcile": {
+          "acked": 121828,
+          "ok": true,
+          "present": 121828,
+          "lost": 0,
+          "corrupt": 0,
+          "unreadable": 0,
+          "unrecorded_rows_in_db": 120,
+          "lost_sample": [],
+          "corrupt_sample": [],
+          "unreadable_sample": [],
+          "seconds": 4.4
+        }
+      },
+      "repeat_of": null,
+      "blocked": false,
+      "attack_output": ""
+    },
+    {
+      "round": "crash2",
+      "title": "SECOND CONTACT",
+      "move": "SIGKILL STORM",
+      "name": "pg_crash comes back after the fatality, same move",
+      "won": true,
+      "timed_out": false,
+      "attack_at": "2026-10-21T02:05:21.796Z",
+      "ended_at": "2026-10-21T02:06:26.762Z",
+      "seconds_to_wake": null,
+      "seconds_to_first_clue": null,
+      "seconds_to_oracle_ok": null,
+      "downtime": {
+        "crash_cycles": 0,
+        "db_down_s": 1.0,
+        "db_first_down_s": 0.0,
+        "stable_after_s": 1.1,
+        "db_down_intervals": [
+          [
+            0.0,
+            1.1
+          ]
+        ],
+        "app_longest_gap_s": 1.1,
+        "app_stall_s": 0.1,
+        "app_stalls": 1,
+        "probe_down_s": 1.0
+      },
+      "incidents": [],
+      "recurrences": 0,
+      "guard_denials": 0,
+      "denied_rules": [],
+      "agent_tool_calls": 0,
+      "restarts_used": 0,
+      "restart_at_s": [],
+      "evolve_done_s": null,
+      "tokens": 0,
+      "evolution": [],
+      "final_check": {
+        "preload": "pg_stat_statements",
+        "crash_lines_45s": 0,
+        "reconcile": {
+          "acked": 124336,
+          "ok": true,
+          "present": 124336,
+          "lost": 0,
+          "corrupt": 0,
+          "unreadable": 0,
+          "unrecorded_rows_in_db": 120,
+          "lost_sample": [],
+          "corrupt_sample": [],
+          "unreadable_sample": [],
+          "seconds": 4.6
+        }
+      },
+      "repeat_of": "crash",
+      "blocked": true,
+      "pre_empted": false,
+      "evidence": {
+        "blocked_error": null,
+        "attack_output": "",
+        "preload": "pg_stat_statements",
+        "crash_lines_45s": 0,
+        "reconcile": {
+          "acked": 123136,
+          "ok": true,
+          "present": 123136,
+          "lost": 0,
+          "corrupt": 0,
+          "unreadable": 0,
+          "unrecorded_rows_in_db": 132,
+          "lost_sample": [],
+          "corrupt_sample": [],
+          "unreadable_sample": [],
+          "seconds": 4.9
+        },
+        "source": "99-raiden-pin-preload.conf:4",
+        "experiment_file_present": true,
+        "auto_conf_pg_crash_lines": "0",
+        "allow_alter_system": "off"
+      },
+      "attack_output": "",
+      "blocked_error": null
+    }
+  ],
+  "workload": {
+    "t": 1792548415.9,
+    "started": 1792543557.2,
+    "acked": 125236,
+    "connects": 1450,
+    "errors": {
+      "42P01": 810,
+      "57P01": 10,
+      "OperationalError": 35
+    },
+    "reads": {
+      "ok": 46804,
+      "error:XX001": 3,
+      "error:42P01": 994,
+      "error:57P01": 3,
+      "error:OperationalError": 35
+    },
+    "since_last_ack_s": 0.0,
+    "max_ack_gap_s": 103.0
+  },
+  "final": {
+    "acked": 125269,
+    "ok": true,
+    "present": 125269,
+    "lost": 0,
+    "corrupt": 0,
+    "unreadable": 0,
+    "unrecorded_rows_in_db": 0,
+    "lost_sample": [],
+    "corrupt_sample": [],
+    "unreadable_sample": [],
+    "seconds": 4.6,
+    "amcheck": "ok"
+  },
+  "flawless": true,
+  "rounds_won": 12,
+  "rounds_total": 12,
+  "attacks_landed": 5,
+  "attacks_blocked": 6,
+  "blocked_attempts": 6,
+  "artifacts_added_or_changed": [
+    ".claude/skills/learned-extension-guard/SKILL.md",
+    ".claude/skills/learned-lock-queue/SKILL.md",
+    ".claude/skills/learned-lock-queue/scripts/lock_wait_history.py",
+    ".claude/skills/learned-preload-guard/SKILL.md",
+    ".claude/skills/learned-replica-ops/SKILL.md",
+    ".claude/skills/learned-reporting-limits/SKILL.md",
+    ".claude/skills/learned-scratch-proof-alert/SKILL.md",
+    ".claude/skills/learned-table-drop-guard/SKILL.md",
+    ".claude/skills/learned-table-drop-guard/scripts/ddl_attempts.py",
+    "checks.d/85-replica.sh",
+    "checks.d/86-baseline.sh",
+    "checks.d/87-extension-guard.sh",
+    "checks.d/88-ddl-attempts.sh",
+    "checks.d/88-table-guard.sh",
+    "checks.d/88-table-guard.sql",
+    "checks.d/89-lock-queue.sh",
+    "checks.d/89-lock-wait-history.sh",
+    "checks.d/89-preload-guard.sh",
+    "checks.d/89-reporting-limits.sh",
+    "checks.d/89-scratch-proof-guard.sh",
+    "checks.d/90-protections.sh"
+  ],
+  "protections": [
+    "baseline-config|2026-10-21T00:49:04Z|allow_alter_system=off, slot WAL cap 4GB, idle-in-transaction timeout 5min (conf.d/98-raiden-baseline.conf)",
+    "replica|2026-10-21T00:49:04Z|streaming replica raiden_replica on port 5434 (unit pg-standby), monitored by 85-replica.sh",
+    "backup|2026-10-21T00:49:04Z|verified base backup 20261021T004705 in /var/backups/postgresql/base; freshness checked by 86-baseline.sh",
+    "extension-allowlist|2026-10-21T00:56:00Z|event trigger raiden_extension_allowlist: only amcheck and plpgsql may be created in ledger; proof rejected pg_surgery including postgres role",
+    "protected-tables|2026-10-21T01:03:19Z|event trigger raiden_protect_tables: registered tables in ledger cannot be dropped; public.entries registered; scratch proof rejected arena owner DROP TABLE",
+    "protected-tables|2026-10-21T01:39:34Z|existing P3 preserved after inc-3b98; transactional arena-owned scratch DROP reproof rejected with 42501; rollback and residue absence verified",
+    "role-limits|2026-10-21T01:13:00Z|role reporting: connection limit 10, idle session 2min, idle-in-transaction 15s; equivalent scratch login 11 rejected",
+    "lock-timeout|2026-10-21T01:24:00Z|role migrator: lock_timeout 3s; role analyst: idle-in-transaction 15s; scratch LOCK canceled and fresh equivalent idle login expired",
+    "lock-timeout|2026-10-21T01:48:52Z|role migrator: existing P5 preserved after inc-184f; distinct-system disposable fresh-login reproof canceled exact scratch LOCK in 3.000s (55P03), analyst idle transaction expired at 15s; no primary proof writes",
+    "scratch-proof-primary-refusal|2026-10-21T01:30:42Z|prove_lock_queue_defaults.py refuses missing disposable target or primary system identifier before SQL writes; default and explicit-primary refusal proven; fingerprint patrol",
+    "pin-preload|2026-10-21T02:01:56Z|shared_preload_libraries pinned to 'pg_stat_statements' (conf.d/99-raiden-pin-preload.conf); retained-copy exact 50-experiment and 90-attacker proof plus positive control passed"
+  ],
+  "pg_version": "18.6 (Ubuntu 18.6-1.pgdg24.04+2)",
+  "model": "gpt-5.5"
+}

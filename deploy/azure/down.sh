@@ -20,6 +20,12 @@ azs cognitiveservices account list-deleted --query "[?name=='$ACCT'] | length(@)
 echo -n "leftover resources tagged app=raiden: "
 azs resource list --tag app=raiden --query "length(@)" -o tsv
 
+if [ "${FEATURE_REGISTERED_BY_UP:-0}" = "1" ]; then
+  log "unregistering Microsoft.Network/AllowBringYourOwnPublicIpAddress (registered by up.sh)"
+  azs feature unregister --namespace Microsoft.Network --name AllowBringYourOwnPublicIpAddress -o none || true
+  echo -n "feature state: "; azs feature show --namespace Microsoft.Network --name AllowBringYourOwnPublicIpAddress --query properties.state -o tsv
+fi
+
 if [ -f "${SSH_KEY:-}" ]; then
   log "removing the throwaway SSH key and known_hosts entry"
   ssh-keygen -R "$IP" >/dev/null 2>&1 || true

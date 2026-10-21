@@ -1,0 +1,32 @@
+{
+  "id": "inc-20261021T005104-7d61",
+  "opened_at": "2026-10-21T00:50:54.578Z",
+  "dispatched_at": "2026-10-21T00:51:04.798Z",
+  "reason": "critical event: corruption x8",
+  "signatures": [
+    "corruption:XX001:unexpected chunk number 2 (expected 1) for toast value N in pg_toast_84508"
+  ],
+  "kinds": {
+    "corruption": 8
+  },
+  "events_count": 8,
+  "critical": true,
+  "recurrence_of": null,
+  "model": "gpt-6.1-sol",
+  "finished_at": "2026-10-21T00:53:54.864Z",
+  "outcome": "resolved",
+  "summary": "Recovered four unreadable ledger payloads from a verified PITR side clone. Scanner and whole-database amcheck clean; oracle verified all 11,208 acknowledged commits intact with zero lost, corrupt or unreadable rows. Primary remained online with durability unchanged and no restarts; report and lessons recorded.",
+  "session_id": "inc-20261021T005104-7d61",
+  "num_turns": 20,
+  "duration_ms": 170057,
+  "total_cost_usd": 0.0,
+  "tool_calls": 31,
+  "denied_calls": 0,
+  "report_path": "/var/lib/raiden/incidents/inc-20261021T005104-7d61/report.md",
+  "error": null,
+  "usage": {
+    "prompt_tokens": 480889,
+    "completion_tokens": 4877,
+    "cached_tokens": 446196
+  }
+}

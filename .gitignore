@@ -8,10 +8,12 @@ deploy/azure/state.env
 *.env
 !deploy/vm/raiden.env.example
 .DS_Store
-results/raw/
-results/*.tgz
-results/*.b64
-results/bundle-partial/
-talk/*.SAMPLE-DATA.pdf
-talk/script.SAMPLE-DATA.md
-talk/slides.html
+tests/chaos/results/raw/
+tests/chaos/results/*.tgz
+tests/chaos/results/*.b64
+tests/chaos/results/bundle-partial/
+# web console
+web/node_modules/
+web/dist/
+raiden/console/static/
+*.tsbuildinfo

@@ -1,0 +1,34 @@
+{
+  "id": "inc-20261021T011631-7c80",
+  "opened_at": "2026-10-21T01:16:24.035Z",
+  "dispatched_at": "2026-10-21T01:16:31.376Z",
+  "reason": "critical event: lock_queue x6",
+  "signatures": [
+    "lock_queue:LOG:process N still waiting for AccessExclusiveLock on relation N of database N after N.N ms",
+    "lock_queue:LOG:process N still waiting for AccessShareLock on relation N of database N after N.N ms",
+    "lock_queue:LOG:process N still waiting for RowExclusiveLock on relation N of database N after N.N ms"
+  ],
+  "kinds": {
+    "lock_queue": 6
+  },
+  "events_count": 6,
+  "critical": true,
+  "recurrence_of": null,
+  "model": "gpt-6.1-sol",
+  "finished_at": "2026-10-21T01:20:17.923Z",
+  "outcome": "resolved",
+  "summary": "Canceled waiting migrator lock and terminated idle analyst blocker, draining ledger queue after ~26 seconds. Applied analyst 15s idle-transaction and migrator 3s lock timeouts; no restart. Over two minutes without new waits; oracle verified all 49,552 acknowledged commits intact.",
+  "session_id": "inc-20261021T011631-7c80",
+  "num_turns": 14,
+  "duration_ms": 226539,
+  "total_cost_usd": 0.0,
+  "tool_calls": 22,
+  "denied_calls": 0,
+  "report_path": "/var/lib/raiden/incidents/inc-20261021T011631-7c80/report.md",
+  "error": null,
+  "usage": {
+    "prompt_tokens": 287630,
+    "completion_tokens": 4445,
+    "cached_tokens": 256911
+  }
+}

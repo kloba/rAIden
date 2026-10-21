@@ -1,0 +1,567 @@
+{"t":"00:47:00.408","ty":"agent_tool","i":"fort-20261021T004657","s":"fortify","tool":"load_skill","d":false,"x":"fortify-database","r":null,"o":null}
+{"t":"00:47:05.517","ty":"agent_tool","i":"fort-20261021T004657","s":"fortify","tool":"bash","d":false,"x":"export PGCONNECT_TIMEOUT=3; date -u +%Y%m%dT%H%M%S; psql -X -At -d postgres -c \"select version()\"; sudo -n -u ","r":null,"o":null}
+{"t":"00:47:07.856","ty":"agent_tool","i":"fort-20261021T004657","s":"fortify","tool":"pg_probe","d":false,"x":"","r":null,"o":null}
+{"t":"00:47:13.626","ty":"agent_tool","i":"fort-20261021T004657","s":"fortify","tool":"write_file","d":false,"x":"$RAIDEN_INCIDENT_DIR/notes.md","r":null,"o":null}
+{"t":"00:47:17.370","ty":"agent_tool","i":"fort-20261021T004657","s":"fortify","tool":"bash","d":false,"x":"export PGCONNECT_TIMEOUT=3; sudo -n -u postgres pg_basebackup -D /var/backups/postgresql/base/20261021T004705 ","r":null,"o":null}
+{"t":"00:47:19.280","ty":"agent_tool","i":"fort-20261021T004657","s":"fortify","tool":"bash","d":false,"x":"sudo -n -u postgres pg_verifybackup /var/backups/postgresql/base/20261021T004705","r":null,"o":null}
+{"t":"00:47:23.013","ty":"agent_tool","i":"fort-20261021T004657","s":"fortify","tool":"bash","d":false,"x":"export PGCONNECT_TIMEOUT=3; psql -X -At -d postgres -c \"select name||'='||setting from pg_settings where name ","r":null,"o":null}
+{"t":"00:47:29.047","ty":"agent_tool","i":"fort-20261021T004657","s":"fortify","tool":"bash","d":false,"x":"export PGCONNECT_TIMEOUT=3; pg_basebackup -h /var/run/postgresql -U raiden -D /var/lib/raiden/work/replica -Fp","r":null,"o":null}
+{"t":"00:47:31.449","ty":"agent_tool","i":"fort-20261021T004657","s":"fortify","tool":"bash","d":false,"x":"cp /var/lib/raiden/work/replica/postgresql.auto.conf /var/lib/raiden/work/replica-auto.conf.before-fortify; ca","r":null,"o":null}
+{"t":"00:47:34.503","ty":"agent_tool","i":"fort-20261021T004657","s":"fortify","tool":"write_file","d":false,"x":"/var/lib/raiden/work/replica/postgresql.conf","r":null,"o":null}
+{"t":"00:47:36.451","ty":"agent_tool","i":"fort-20261021T004657","s":"fortify","tool":"write_file","d":false,"x":"/var/lib/raiden/work/replica/pg_hba.conf","r":null,"o":null}
+{"t":"00:47:39.697","ty":"agent_tool","i":"fort-20261021T004657","s":"fortify","tool":"write_file","d":false,"x":"/var/lib/raiden/work/replica/pg_ident.conf","r":null,"o":null}
+{"t":"00:47:43.904","ty":"agent_tool","i":"fort-20261021T004657","s":"fortify","tool":"edit_file","d":false,"x":"/var/lib/raiden/work/replica/postgresql.auto.conf","r":null,"o":null}
+{"t":"00:47:45.961","ty":"agent_tool","i":"fort-20261021T004657","s":"fortify","tool":"bash","d":false,"x":"sudo -n systemctl start pg-standby","r":null,"o":null}
+{"t":"00:47:50.209","ty":"agent_tool","i":"fort-20261021T004657","s":"fortify","tool":"bash","d":false,"x":"export PGCONNECT_TIMEOUT=3; timeout 90 bash -c 'until pg_isready -q -h /tmp -p 5434 -t 2; do sleep 1; done'; e","r":null,"o":null}
+{"t":"00:47:53.447","ty":"agent_tool","i":"fort-20261021T004657","s":"fortify","tool":"bash","d":false,"x":"printf '%s\\n' '# rAIden baseline hardening (fortify session). Reloadable settings only.' 'allow_alter_system =","r":null,"o":null}
+{"t":"00:47:56.773","ty":"agent_tool","i":"fort-20261021T004657","s":"fortify","tool":"bash","d":false,"x":"export PGCONNECT_TIMEOUT=3; psql -X -At -d postgres -c \"select name||'='||setting||' ('||coalesce(sourcefile,'","r":null,"o":null}
+{"t":"00:47:58.837","ty":"agent_tool","i":"fort-20261021T004657","s":"fortify","tool":"load_skill","d":false,"x":"hardening-after-incident","r":null,"o":null}
+{"t":"00:48:05.777","ty":"agent_tool","i":"fort-20261021T004657","s":"fortify","tool":"bash","d":false,"x":"ls -ld /var/backups/postgresql/base /var/backups/postgresql/base/20261021T004705; ls /opt/raiden/checks.d; cat","r":null,"o":null}
+{"t":"00:48:19.591","ty":"agent_tool","i":"fort-20261021T004657","s":"fortify","tool":"write_file","d":false,"x":"/opt/raiden/checks.d/85-replica.sh","r":null,"o":null}
+{"t":"00:48:32.098","ty":"agent_tool","i":"fort-20261021T004657","s":"fortify","tool":"write_file","d":false,"x":"/opt/raiden/checks.d/86-baseline.sh","r":null,"o":null}
+{"t":"00:48:54.420","ty":"agent_tool","i":"fort-20261021T004657","s":"fortify","tool":"write_file","d":false,"x":"/opt/raiden/.claude/skills/learned-replica-ops/SKILL.md","r":null,"o":null}
+{"t":"00:49:01.478","ty":"agent_tool","i":"fort-20261021T004657","s":"fortify","tool":"bash","d":false,"x":"chmod 755 /opt/raiden/checks.d/85-replica.sh /opt/raiden/checks.d/86-baseline.sh; bash -n /opt/raiden/checks.d","r":null,"o":null}
+{"t":"00:49:04.572","ty":"agent_tool","i":"fort-20261021T004657","s":"fortify","tool":"bash","d":false,"x":"date -u +%FT%TZ; cat /opt/raiden/checks.d/90-protections.sh","r":null,"o":null}
+{"t":"00:49:09.417","ty":"agent_tool","i":"fort-20261021T004657","s":"fortify","tool":"write_file","d":false,"x":"/var/lib/raiden/memory/protections.list","r":null,"o":null}
+{"t":"00:49:12.507","ty":"agent_tool","i":"fort-20261021T004657","s":"fortify","tool":"bash","d":false,"x":"/opt/raiden/.claude/skills/health-patrol/scripts/run_checks.sh","r":null,"o":null}
+{"t":"00:49:17.956","ty":"agent_tool","i":"fort-20261021T004657","s":"fortify","tool":"bash","d":false,"x":"export PGCONNECT_TIMEOUT=3; psql -X -d postgres -c \"select s.slot_name,s.active,r.state,r.sync_state,pg_wal_ls","r":null,"o":null}
+{"t":"00:49:23.388","ty":"agent_tool","i":"fort-20261021T004657","s":"fortify","tool":"bash","d":false,"x":"export PGCONNECT_TIMEOUT=3; for i in $(seq 1 30); do v=$(psql -X -At -F '|' -d postgres -c \"select s.active,r.","r":null,"o":null}
+{"t":"00:49:25.233","ty":"agent_tool","i":"fort-20261021T004657","s":"fortify","tool":"pg_probe","d":false,"x":"","r":null,"o":null}
+{"t":"00:49:39.231","ty":"agent_tool","i":"fort-20261021T004657","s":"fortify","tool":"write_file","d":false,"x":"/var/lib/raiden/memory/evolution.md","r":null,"o":null}
+{"t":"00:49:47.660","ty":"agent_tool","i":"fort-20261021T004657","s":"fortify","tool":"edit_file","d":false,"x":"$RAIDEN_INCIDENT_DIR/notes.md","r":null,"o":null}
+{"t":"00:50:18.572","ty":"agent_tool","i":"fort-20261021T004657","s":"fortify","tool":"write_file","d":false,"x":"$RAIDEN_INCIDENT_DIR/report.md","r":null,"o":null}
+{"t":"00:50:24.561","ty":"agent_tool","i":"fort-20261021T004657","s":"fortify","tool":"write_file","d":false,"x":"/var/lib/raiden/memory/lessons.md","r":null,"o":null}
+{"t":"00:50:27.753","ty":"agent_tool","i":"fort-20261021T004657","s":"fortify","tool":"finish","d":false,"x":"Verified base backup, zero-lag streaming replica, reloadable baseline, two tested patrol checks and learned ru","r":null,"o":null}
+{"t":"00:51:04.798","ty":"incident_opened","i":"inc-20261021T005104-7d61","s":null,"tool":null,"d":null,"x":"","r":null,"o":null}
+{"t":"00:51:04.798","ty":"incident_dispatched","i":"inc-20261021T005104-7d61","s":null,"tool":null,"d":null,"x":"","r":null,"o":null}
+{"t":"00:51:07.138","ty":"agent_tool","i":"inc-20261021T005104-7d61","s":"incident","tool":"load_skill","d":false,"x":"pg-triage","r":null,"o":null}
+{"t":"00:51:10.510","ty":"agent_tool","i":"inc-20261021T005104-7d61","s":"incident","tool":"bash","d":false,"x":"/opt/raiden/.claude/skills/pg-triage/scripts/snapshot.sh 30","r":null,"o":null}
+{"t":"00:51:10.510","ty":"agent_tool","i":"inc-20261021T005104-7d61","s":"incident","tool":"load_skill","d":false,"x":"toast-corruption","r":null,"o":null}
+{"t":"00:51:10.528","ty":"agent_tool","i":"inc-20261021T005104-7d61","s":"incident","tool":"pg_probe","d":false,"x":"","r":null,"o":null}
+{"t":"00:51:10.530","ty":"agent_tool","i":"inc-20261021T005104-7d61","s":"incident","tool":"bash","d":false,"x":"cat /var/lib/raiden/memory/protections.list /var/lib/raiden/memory/evolution.md","r":null,"o":null}
+{"t":"00:51:15.280","ty":"agent_tool","i":"inc-20261021T005104-7d61","s":"incident","tool":"load_skill","d":false,"x":"pitr-restore","r":null,"o":null}
+{"t":"00:51:15.280","ty":"agent_tool","i":"inc-20261021T005104-7d61","s":"incident","tool":"load_skill","d":false,"x":"data-loss-verification","r":null,"o":null}
+{"t":"00:51:15.298","ty":"agent_tool","i":"inc-20261021T005104-7d61","s":"incident","tool":"bash","d":false,"x":"PGCONNECT_TIMEOUT=3 psql -X -d ledger -c \"SELECT c.oid::regclass FROM pg_class c WHERE c.reltoastrelid='pg_toa","r":null,"o":null}
+{"t":"00:51:22.209","ty":"agent_tool","i":"inc-20261021T005104-7d61","s":"incident","tool":"write_file","d":false,"x":"$RAIDEN_INCIDENT_DIR/notes.md","r":null,"o":null}
+{"t":"00:51:28.624","ty":"agent_tool","i":"inc-20261021T005104-7d61","s":"incident","tool":"bash","d":false,"x":"PGCONNECT_TIMEOUT=3 psql -X -q -d ledger -v ON_ERROR_STOP=1 -f /opt/raiden/.claude/skills/toast-corruption/scr","r":null,"o":null}
+{"t":"00:51:29.211","ty":"agent_tool","i":"inc-20261021T005104-7d61","s":"incident","tool":"bash","d":false,"x":"/opt/raiden/venv/bin/python /opt/arena/ledger.py reconcile --json > \"$RAIDEN_INCIDENT_DIR/reconcile-before.jso","r":null,"o":null}
+{"t":"00:51:29.212","ty":"agent_tool","i":"inc-20261021T005104-7d61","s":"incident","tool":"read_file","d":false,"x":"/opt/raiden/.claude/skills/pitr-restore/scripts/pitr_clone.sh","r":null,"o":null}
+{"t":"00:51:39.014","ty":"patrol_run","i":null,"s":null,"tool":null,"d":null,"x":"","r":null,"o":null}
+{"t":"00:51:42.614","ty":"agent_tool","i":"inc-20261021T005104-7d61","s":"incident","tool":"bash","d":false,"x":"/opt/raiden/.claude/skills/pitr-restore/scripts/pitr_clone.sh --target-time '2026-10-21 00:50:54.400 UTC' | te","r":null,"o":null}
+{"t":"00:51:48.955","ty":"agent_tool","i":"inc-20261021T005104-7d61","s":"incident","tool":"write_file","d":false,"x":"$RAIDEN_INCIDENT_DIR/export-good.sql","r":null,"o":null}
+{"t":"00:51:56.154","ty":"agent_tool","i":"inc-20261021T005104-7d61","s":"incident","tool":"bash","d":false,"x":"PGCONNECT_TIMEOUT=3 psql -X -q -h /var/lib/raiden/work/pitr-20261021T005136 -p 5433 -d ledger -v ON_ERROR_STOP","r":null,"o":null}
+{"t":"00:51:56.364","ty":"agent_tool","i":"inc-20261021T005104-7d61","s":"incident","tool":"bash","d":false,"x":"pg_amcheck -d ledger --heapallindexed --progress > \"$RAIDEN_INCIDENT_DIR/amcheck-before.txt\" 2>&1; tail -30 \"$","r":null,"o":null}
+{"t":"00:52:01.774","ty":"agent_tool","i":"inc-20261021T005104-7d61","s":"incident","tool":"write_file","d":false,"x":"$RAIDEN_INCIDENT_DIR/repair.sql","r":null,"o":null}
+{"t":"00:52:06.480","ty":"agent_tool","i":"inc-20261021T005104-7d61","s":"incident","tool":"edit_file","d":false,"x":"$RAIDEN_INCIDENT_DIR/notes.md","r":null,"o":null}
+{"t":"00:52:12.959","ty":"agent_tool","i":"inc-20261021T005104-7d61","s":"incident","tool":"edit_file","d":false,"x":"$RAIDEN_INCIDENT_DIR/notes.md","r":null,"o":null}
+{"t":"00:52:15.335","ty":"agent_tool","i":"inc-20261021T005104-7d61","s":"incident","tool":"bash","d":false,"x":"PGCONNECT_TIMEOUT=3 psql -X -d ledger -f \"$RAIDEN_INCIDENT_DIR/repair.sql\" | tee \"$RAIDEN_INCIDENT_DIR/repair-","r":null,"o":null}
+{"t":"00:52:23.814","ty":"agent_tool","i":"inc-20261021T005104-7d61","s":"incident","tool":"bash","d":false,"x":"PGCONNECT_TIMEOUT=3 psql -X -q -d ledger -v ON_ERROR_STOP=1 -f /opt/raiden/.claude/skills/toast-corruption/scr","r":null,"o":null}
+{"t":"00:52:23.850","ty":"agent_tool","i":"inc-20261021T005104-7d61","s":"incident","tool":"bash","d":false,"x":"sudo -n -u postgres pg_waldump -p /var/lib/postgresql/wal_archive -r Transaction 00000001000000000000004D 0000","r":null,"o":null}
+{"t":"00:52:23.850","ty":"agent_tool","i":"inc-20261021T005104-7d61","s":"incident","tool":"load_skill","d":false,"x":"hardening-after-incident","r":null,"o":null}
+{"t":"00:53:00.247","ty":"agent_tool","i":"inc-20261021T005104-7d61","s":"incident","tool":"bash","d":false,"x":"sudo -n -u postgres pg_waldump -p /var/lib/postgresql/wal_archive -s 0/4EB93648 -e 0/4EBA1460 0000000100000000","r":null,"o":null}
+{"t":"00:53:00.251","ty":"agent_tool","i":"inc-20261021T005104-7d61","s":"incident","tool":"bash","d":false,"x":"cat /var/lib/raiden/memory/lessons.md; date -u +%FT%TZ","r":null,"o":null}
+{"t":"00:53:07.341","ty":"agent_tool","i":"inc-20261021T005104-7d61","s":"incident","tool":"edit_file","d":false,"x":"$RAIDEN_INCIDENT_DIR/notes.md","r":null,"o":null}
+{"t":"00:53:12.138","ty":"agent_tool","i":"inc-20261021T005104-7d61","s":"incident","tool":"bash","d":false,"x":"/opt/raiden/.claude/skills/pitr-restore/scripts/pitr_cleanup.sh /var/lib/raiden/work/pitr-20261021T005136; PGC","r":null,"o":null}
+{"t":"00:53:14.271","ty":"agent_tool","i":"inc-20261021T005104-7d61","s":"incident","tool":"pg_probe","d":false,"x":"","r":null,"o":null}
+{"t":"00:53:44.510","ty":"agent_tool","i":"inc-20261021T005104-7d61","s":"incident","tool":"write_file","d":false,"x":"$RAIDEN_INCIDENT_DIR/report.md","r":null,"o":null}
+{"t":"00:53:50.835","ty":"agent_tool","i":"inc-20261021T005104-7d61","s":"incident","tool":"edit_file","d":false,"x":"/var/lib/raiden/memory/lessons.md","r":null,"o":null}
+{"t":"00:53:54.864","ty":"agent_tool","i":"inc-20261021T005104-7d61","s":"incident","tool":"finish","d":false,"x":"Recovered four unreadable ledger payloads from a verified PITR side clone. Scanner and whole-database amcheck ","r":null,"o":null}
+{"t":"00:53:54.864","ty":"incident_closed","i":"inc-20261021T005104-7d61","s":null,"tool":null,"d":0,"x":"Recovered four unreadable ledger payloads from a verified PITR side clone. Scanner and whole-database amcheck ","r":null,"o":"resolved"}
+{"t":"00:54:39.913","ty":"incident_verified_quiet","i":"inc-20261021T005104-7d61","s":null,"tool":null,"d":null,"x":"","r":null,"o":null}
+{"t":"00:54:39.915","ty":"evolution_started","i":"inc-20261021T005104-7d61","s":null,"tool":null,"d":null,"x":"","r":null,"o":null}
+{"t":"00:54:44.344","ty":"agent_tool","i":"inc-20261021T005104-7d61-evolve","s":"evolve","tool":"read_file","d":false,"x":"/var/lib/raiden/incidents/inc-20261021T005104-7d61/report.md","r":null,"o":null}
+{"t":"00:54:44.344","ty":"agent_tool","i":"inc-20261021T005104-7d61-evolve","s":"evolve","tool":"read_file","d":false,"x":"/var/lib/raiden/memory/lessons.md","r":null,"o":null}
+{"t":"00:54:44.344","ty":"agent_tool","i":"inc-20261021T005104-7d61-evolve","s":"evolve","tool":"read_file","d":false,"x":"/var/lib/raiden/memory/evolution.md","r":null,"o":null}
+{"t":"00:54:44.344","ty":"agent_tool","i":"inc-20261021T005104-7d61-evolve","s":"evolve","tool":"read_file","d":false,"x":"/var/lib/raiden/memory/protections.list","r":null,"o":null}
+{"t":"00:54:44.344","ty":"agent_tool","i":"inc-20261021T005104-7d61-evolve","s":"evolve","tool":"load_skill","d":false,"x":"hardening-after-incident","r":null,"o":null}
+{"t":"00:54:44.348","ty":"agent_tool","i":"inc-20261021T005104-7d61-evolve","s":"evolve","tool":"bash","d":false,"x":"/usr/bin/tail -n 70 /var/lib/raiden/audit.jsonl","r":null,"o":null}
+{"t":"00:54:48.290","ty":"agent_tool","i":"inc-20261021T005104-7d61-evolve","s":"evolve","tool":"load_skill","d":false,"x":"preventive-protections","r":null,"o":null}
+{"t":"00:54:48.290","ty":"agent_tool","i":"inc-20261021T005104-7d61-evolve","s":"evolve","tool":"load_skill","d":false,"x":"pg-triage","r":null,"o":null}
+{"t":"00:54:48.311","ty":"agent_tool","i":"inc-20261021T005104-7d61-evolve","s":"evolve","tool":"pg_probe","d":false,"x":"","r":null,"o":null}
+{"t":"00:54:48.319","ty":"agent_tool","i":"inc-20261021T005104-7d61-evolve","s":"evolve","tool":"bash","d":false,"x":"ls -l /opt/raiden/checks.d; ls /opt/raiden/.claude/skills; jq -r 'select(.incident == \"inc-20261021T005104-7d6","r":null,"o":null}
+{"t":"00:54:51.500","ty":"agent_tool","i":"inc-20261021T005104-7d61-evolve","s":"evolve","tool":"bash","d":false,"x":"PGCONNECT_TIMEOUT=3 psql -X -d ledger -c \"SELECT extname FROM pg_extension ORDER BY 1; SELECT evtname,evtenabl","r":null,"o":null}
+{"t":"00:55:06.548","ty":"agent_tool","i":"inc-20261021T005104-7d61-evolve","s":"evolve","tool":"write_file","d":false,"x":"$RAIDEN_INCIDENT_DIR/notes.md","r":null,"o":null}
+{"t":"00:55:14.031","ty":"agent_tool","i":"inc-20261021T005104-7d61-evolve","s":"evolve","tool":"write_file","d":false,"x":"/var/lib/raiden/work/p2_extension_allowlist.sql","r":null,"o":null}
+{"t":"00:55:17.370","ty":"agent_tool","i":"inc-20261021T005104-7d61-evolve","s":"evolve","tool":"bash","d":false,"x":"PGCONNECT_TIMEOUT=3 psql -X -d ledger -v ON_ERROR_STOP=1 -f /var/lib/raiden/work/p2_extension_allowlist.sql; b","r":null,"o":null}
+{"t":"00:55:22.254","ty":"agent_tool","i":"inc-20261021T005104-7d61-evolve","s":"evolve","tool":"bash","d":false,"x":"cp /var/lib/raiden/memory/protections.list /var/lib/raiden/work/inc-7d61-protections.before; cp /var/lib/raide","r":null,"o":null}
+{"t":"00:55:26.957","ty":"agent_tool","i":"inc-20261021T005104-7d61-evolve","s":"evolve","tool":"edit_file","d":false,"x":"/var/lib/raiden/memory/protections.list","r":null,"o":null}
+{"t":"00:55:32.652","ty":"agent_tool","i":"inc-20261021T005104-7d61-evolve","s":"evolve","tool":"write_file","d":false,"x":"/var/lib/raiden/memory/extension-guard.baseline","r":null,"o":null}
+{"t":"00:55:48.316","ty":"agent_tool","i":"inc-20261021T005104-7d61-evolve","s":"evolve","tool":"write_file","d":false,"x":"/opt/raiden/checks.d/87-extension-guard.sh","r":null,"o":null}
+{"t":"00:56:10.376","ty":"agent_tool","i":"inc-20261021T005104-7d61-evolve","s":"evolve","tool":"write_file","d":false,"x":"/opt/raiden/.claude/skills/learned-extension-guard/SKILL.md","r":null,"o":null}
+{"t":"00:56:16.497","ty":"agent_tool","i":"inc-20261021T005104-7d61-evolve","s":"evolve","tool":"bash","d":false,"x":"bash -n /opt/raiden/checks.d/87-extension-guard.sh; chmod 755 /opt/raiden/checks.d/87-extension-guard.sh; if c","r":null,"o":null}
+{"t":"00:56:24.167","ty":"agent_tool","i":"inc-20261021T005104-7d61-evolve","s":"evolve","tool":"load_skill","d":false,"x":"learned-extension-guard","r":null,"o":null}
+{"t":"00:56:24.188","ty":"agent_tool","i":"inc-20261021T005104-7d61-evolve","s":"evolve","tool":"pg_probe","d":false,"x":"","r":null,"o":null}
+{"t":"00:56:24.885","ty":"agent_tool","i":"inc-20261021T005104-7d61-evolve","s":"evolve","tool":"bash","d":false,"x":"PGCONNECT_TIMEOUT=3 psql -X -d postgres -c \"SELECT count(*) AS config_errors FROM pg_file_settings WHERE error","r":null,"o":null}
+{"t":"00:56:50.627","ty":"agent_tool","i":"inc-20261021T005104-7d61-evolve","s":"evolve","tool":"write_file","d":false,"x":"$RAIDEN_INCIDENT_DIR/report.md","r":null,"o":null}
+{"t":"00:56:55.344","ty":"agent_tool","i":"inc-20261021T005104-7d61-evolve","s":"evolve","tool":"edit_file","d":false,"x":"/var/lib/raiden/memory/lessons.md","r":null,"o":null}
+{"t":"00:57:09.942","ty":"agent_tool","i":"inc-20261021T005104-7d61-evolve","s":"evolve","tool":"edit_file","d":false,"x":"/var/lib/raiden/memory/evolution.md","r":null,"o":null}
+{"t":"00:57:13.061","ty":"agent_tool","i":"inc-20261021T005104-7d61-evolve","s":"evolve","tool":"finish","d":false,"x":"Installed and proved ledger extension allowlist: CREATE EXTENSION pg_surgery now fails, including postgres rol","r":null,"o":null}
+{"t":"00:57:13.104","ty":"evolution_done","i":"inc-20261021T005104-7d61","s":null,"tool":null,"d":null,"x":"Installed and proved ledger extension allowlist: CREATE EXTENSION pg_surgery now fails, including postgres rol","r":null,"o":null}
+{"t":"00:57:13.369","ty":"incident_settled","i":"inc-20261021T005104-7d61","s":null,"tool":null,"d":null,"x":"","r":null,"o":"resolved"}
+{"t":"00:58:38.286","ty":"incident_opened","i":"inc-20261021T005838-7552","s":null,"tool":null,"d":null,"x":"","r":null,"o":null}
+{"t":"00:58:38.286","ty":"incident_dispatched","i":"inc-20261021T005838-7552","s":null,"tool":null,"d":null,"x":"","r":null,"o":null}
+{"t":"00:58:39.853","ty":"agent_tool","i":"inc-20261021T005838-7552","s":"incident","tool":"load_skill","d":false,"x":"pg-triage","r":null,"o":null}
+{"t":"00:58:43.602","ty":"agent_tool","i":"inc-20261021T005838-7552","s":"incident","tool":"load_skill","d":false,"x":"pitr-restore","r":null,"o":null}
+{"t":"00:58:43.623","ty":"agent_tool","i":"inc-20261021T005838-7552","s":"incident","tool":"pg_probe","d":false,"x":"","r":null,"o":null}
+{"t":"00:58:43.922","ty":"agent_tool","i":"inc-20261021T005838-7552","s":"incident","tool":"bash","d":false,"x":"/opt/raiden/.claude/skills/pg-triage/scripts/snapshot.sh 15","r":null,"o":null}
+{"t":"00:58:43.923","ty":"agent_tool","i":"inc-20261021T005838-7552","s":"incident","tool":"read_file","d":false,"x":"/var/lib/raiden/memory/protections.list","r":null,"o":null}
+{"t":"00:58:43.923","ty":"agent_tool","i":"inc-20261021T005838-7552","s":"incident","tool":"read_file","d":false,"x":"/var/lib/raiden/memory/evolution.md","r":null,"o":null}
+{"t":"00:58:49.922","ty":"agent_tool","i":"inc-20261021T005838-7552","s":"incident","tool":"write_file","d":false,"x":"$RAIDEN_INCIDENT_DIR/notes.md","r":null,"o":null}
+{"t":"00:58:55.920","ty":"agent_tool","i":"inc-20261021T005838-7552","s":"incident","tool":"bash","d":false,"x":"PGCONNECT_TIMEOUT=3 psql -X -At -d postgres -c \"SELECT pg_walfile_name(pg_switch_wal()); SELECT oid FROM pg_da","r":null,"o":null}
+{"t":"00:58:55.921","ty":"agent_tool","i":"inc-20261021T005838-7552","s":"incident","tool":"load_skill","d":false,"x":"data-loss-verification","r":null,"o":null}
+{"t":"00:58:55.921","ty":"agent_tool","i":"inc-20261021T005838-7552","s":"incident","tool":"load_skill","d":false,"x":"hardening-after-incident","r":null,"o":null}
+{"t":"00:59:01.011","ty":"agent_tool","i":"inc-20261021T005838-7552","s":"incident","tool":"bash","d":false,"x":"sudo -n -u postgres pg_waldump -p /var/lib/postgresql/wal_archive -r Transaction 000000010000000000000055 0000","r":null,"o":null}
+{"t":"00:59:08.085","ty":"agent_tool","i":"inc-20261021T005838-7552","s":"incident","tool":"edit_file","d":false,"x":"$RAIDEN_INCIDENT_DIR/notes.md","r":null,"o":null}
+{"t":"00:59:21.329","ty":"agent_tool","i":"inc-20261021T005838-7552","s":"incident","tool":"bash","d":false,"x":"/opt/raiden/.claude/skills/pitr-restore/scripts/pitr_clone.sh --target-xid 88645 --before '2026-10-21 00:58:22","r":null,"o":null}
+{"t":"00:59:37.704","ty":"agent_tool","i":"inc-20261021T005838-7552","s":"incident","tool":"bash","d":false,"x":"PGCONNECT_TIMEOUT=3 psql -X -h /var/lib/raiden/work/pitr-20261021T005912 -p 5433 -d ledger -c \"SELECT count(*)","r":null,"o":null}
+{"t":"00:59:45.591","ty":"agent_tool","i":"inc-20261021T005838-7552","s":"incident","tool":"edit_file","d":false,"x":"$RAIDEN_INCIDENT_DIR/notes.md","r":null,"o":null}
+{"t":"01:00:06.229","ty":"agent_tool","i":"inc-20261021T005838-7552","s":"incident","tool":"bash","d":false,"x":"PGCONNECT_TIMEOUT=3 pg_restore -d ledger --single-transaction --exit-on-error /var/lib/raiden/work/inc-7552-en","r":null,"o":null}
+{"t":"01:00:45.691","ty":"agent_tool","i":"inc-20261021T005838-7552","s":"incident","tool":"bash","d":false,"x":"PGCONNECT_TIMEOUT=3 pg_amcheck -d ledger --parent-check --heapallindexed; PGCONNECT_TIMEOUT=3 psql -X -At -d p","r":null,"o":null}
+{"t":"01:00:45.691","ty":"agent_tool","i":"inc-20261021T005838-7552","s":"incident","tool":"read_file","d":false,"x":"/var/lib/raiden/memory/lessons.md","r":null,"o":null}
+{"t":"01:00:48.078","ty":"agent_tool","i":"inc-20261021T005838-7552","s":"incident","tool":"pg_probe","d":false,"x":"","r":null,"o":null}
+{"t":"01:00:55.417","ty":"agent_tool","i":"inc-20261021T005838-7552","s":"incident","tool":"edit_file","d":false,"x":"$RAIDEN_INCIDENT_DIR/notes.md","r":null,"o":null}
+{"t":"01:00:59.087","ty":"agent_tool","i":"inc-20261021T005838-7552","s":"incident","tool":"bash","d":false,"x":"/opt/raiden/.claude/skills/pitr-restore/scripts/pitr_cleanup.sh /var/lib/raiden/work/pitr-20261021T005912; cp ","r":null,"o":null}
+{"t":"01:01:32.966","ty":"agent_tool","i":"inc-20261021T005838-7552","s":"incident","tool":"write_file","d":false,"x":"$RAIDEN_INCIDENT_DIR/report.md","r":null,"o":null}
+{"t":"01:01:40.382","ty":"agent_tool","i":"inc-20261021T005838-7552","s":"incident","tool":"edit_file","d":false,"x":"/var/lib/raiden/memory/lessons.md","r":null,"o":null}
+{"t":"01:01:43.753","ty":"agent_tool","i":"inc-20261021T005838-7552","s":"incident","tool":"finish","d":false,"x":"Recovered public.entries via exclusive-XID PITR side clone and atomic table-only restore. Verified all 20,734 ","r":null,"o":null}
+{"t":"01:01:43.754","ty":"incident_closed","i":"inc-20261021T005838-7552","s":null,"tool":null,"d":0,"x":"Recovered public.entries via exclusive-XID PITR side clone and atomic table-only restore. Verified all 20,734 ","r":null,"o":"resolved"}
+{"t":"01:02:28.788","ty":"incident_verified_quiet","i":"inc-20261021T005838-7552","s":null,"tool":null,"d":null,"x":"","r":null,"o":null}
+{"t":"01:02:28.791","ty":"evolution_started","i":"inc-20261021T005838-7552","s":null,"tool":null,"d":null,"x":"","r":null,"o":null}
+{"t":"01:02:47.064","ty":"agent_tool","i":"inc-20261021T005838-7552-evolve","s":"evolve","tool":"read_file","d":false,"x":"/var/lib/raiden/incidents/inc-20261021T005838-7552/report.md","r":null,"o":null}
+{"t":"01:02:47.064","ty":"agent_tool","i":"inc-20261021T005838-7552-evolve","s":"evolve","tool":"read_file","d":false,"x":"/var/lib/raiden/memory/lessons.md","r":null,"o":null}
+{"t":"01:02:47.064","ty":"agent_tool","i":"inc-20261021T005838-7552-evolve","s":"evolve","tool":"read_file","d":false,"x":"/var/lib/raiden/memory/evolution.md","r":null,"o":null}
+{"t":"01:02:47.064","ty":"agent_tool","i":"inc-20261021T005838-7552-evolve","s":"evolve","tool":"read_file","d":false,"x":"/var/lib/raiden/memory/protections.list","r":null,"o":null}
+{"t":"01:02:47.068","ty":"agent_tool","i":"inc-20261021T005838-7552-evolve","s":"evolve","tool":"bash","d":false,"x":"tail -n 70 /var/lib/raiden/audit.jsonl","r":null,"o":null}
+{"t":"01:02:47.068","ty":"agent_tool","i":"inc-20261021T005838-7552-evolve","s":"evolve","tool":"load_skill","d":false,"x":"hardening-after-incident","r":null,"o":null}
+{"t":"01:02:50.531","ty":"agent_tool","i":"inc-20261021T005838-7552-evolve","s":"evolve","tool":"load_skill","d":false,"x":"preventive-protections","r":null,"o":null}
+{"t":"01:02:50.557","ty":"agent_tool","i":"inc-20261021T005838-7552-evolve","s":"evolve","tool":"pg_probe","d":false,"x":"","r":null,"o":null}
+{"t":"01:02:50.565","ty":"agent_tool","i":"inc-20261021T005838-7552-evolve","s":"evolve","tool":"bash","d":false,"x":"ls /opt/raiden/checks.d /opt/raiden/.claude/skills; jq -r 'select(.incident==\"inc-20261021T005838-7552\") | [.t","r":null,"o":null}
+{"t":"01:02:58.014","ty":"agent_tool","i":"inc-20261021T005838-7552-evolve","s":"evolve","tool":"read_file","d":false,"x":"/opt/raiden/.claude/skills/preventive-protections/scripts/prove.sh","r":null,"o":null}
+{"t":"01:02:58.014","ty":"agent_tool","i":"inc-20261021T005838-7552-evolve","s":"evolve","tool":"read_file","d":false,"x":"/opt/raiden/checks.d/87-extension-guard.sh","r":null,"o":null}
+{"t":"01:02:58.031","ty":"agent_tool","i":"inc-20261021T005838-7552-evolve","s":"evolve","tool":"bash","d":false,"x":"cp -n /var/lib/raiden/memory/protections.list /var/lib/raiden/work/inc-7552-evolve-protections.before; cp -n /","r":null,"o":null}
+{"t":"01:03:12.460","ty":"agent_tool","i":"inc-20261021T005838-7552-evolve","s":"evolve","tool":"write_file","d":false,"x":"/var/lib/raiden/work/p3_protected_tables.sql","r":null,"o":null}
+{"t":"01:03:19.203","ty":"agent_tool","i":"inc-20261021T005838-7552-evolve","s":"evolve","tool":"bash","d":false,"x":"PGCONNECT_TIMEOUT=3 psql -X -d ledger -v ON_ERROR_STOP=1 -f /var/lib/raiden/work/p3_protected_tables.sql; bash","r":null,"o":null}
+{"t":"01:03:26.654","ty":"guard_denied","i":"inc-20261021T005838-7552-evolve","s":null,"tool":"write_file","d":null,"x":"/var/lib/raiden/work/inc-7552-owner-proof.sql","r":"sql-drop-table","o":null}
+{"t":"01:03:26.654","ty":"agent_tool","i":"inc-20261021T005838-7552-evolve","s":"evolve","tool":"write_file","d":true,"x":"/var/lib/raiden/work/inc-7552-owner-proof.sql","r":null,"o":null}
+{"t":"01:03:32.255","ty":"agent_tool","i":"inc-20261021T005838-7552-evolve","s":"evolve","tool":"bash","d":false,"x":"PGCONNECT_TIMEOUT=3 psql -X -d ledger -c \"BEGIN; SET LOCAL lock_timeout='3s'; CREATE TABLE public.scratch_owne","r":null,"o":null}
+{"t":"01:03:39.390","ty":"agent_tool","i":"inc-20261021T005838-7552-evolve","s":"evolve","tool":"edit_file","d":false,"x":"/var/lib/raiden/memory/protections.list","r":null,"o":null}
+{"t":"01:03:50.585","ty":"agent_tool","i":"inc-20261021T005838-7552-evolve","s":"evolve","tool":"write_file","d":false,"x":"/opt/raiden/checks.d/88-table-guard.sql","r":null,"o":null}
+{"t":"01:03:54.093","ty":"agent_tool","i":"inc-20261021T005838-7552-evolve","s":"evolve","tool":"bash","d":false,"x":"PGCONNECT_TIMEOUT=3 psql -X -qAt -v ON_ERROR_STOP=1 -d ledger -f /opt/raiden/checks.d/88-table-guard.sql; bash","r":null,"o":null}
+{"t":"01:03:58.768","ty":"agent_tool","i":"inc-20261021T005838-7552-evolve","s":"evolve","tool":"write_file","d":false,"x":"/var/lib/raiden/memory/table-guard.baseline","r":null,"o":null}
+{"t":"01:04:06.435","ty":"agent_tool","i":"inc-20261021T005838-7552-evolve","s":"evolve","tool":"write_file","d":false,"x":"/opt/raiden/checks.d/88-table-guard.sh","r":null,"o":null}
+{"t":"01:04:34.331","ty":"agent_tool","i":"inc-20261021T005838-7552-evolve","s":"evolve","tool":"write_file","d":false,"x":"/opt/raiden/.claude/skills/learned-table-drop-guard/SKILL.md","r":null,"o":null}
+{"t":"01:04:40.558","ty":"agent_tool","i":"inc-20261021T005838-7552-evolve","s":"evolve","tool":"bash","d":false,"x":"bash -n /opt/raiden/checks.d/88-table-guard.sh && chmod 755 /opt/raiden/checks.d/88-table-guard.sh; if command","r":null,"o":null}
+{"t":"01:04:40.558","ty":"agent_tool","i":"inc-20261021T005838-7552-evolve","s":"evolve","tool":"load_skill","d":false,"x":"learned-table-drop-guard","r":null,"o":null}
+{"t":"01:04:41.582","ty":"agent_tool","i":"inc-20261021T005838-7552-evolve","s":"evolve","tool":"bash","d":false,"x":"PGCONNECT_TIMEOUT=3 psql -X -At -d postgres -c \"SELECT name,setting FROM pg_settings WHERE name IN ('fsync','f","r":null,"o":null}
+{"t":"01:04:48.214","ty":"agent_tool","i":"inc-20261021T005838-7552-evolve","s":"evolve","tool":"bash","d":false,"x":"python3 -c 'from pathlib import Path; p=Path(\"/opt/raiden/.claude/skills/learned-table-drop-guard/SKILL.md\"); ","r":null,"o":null}
+{"t":"01:04:51.294","ty":"agent_tool","i":"inc-20261021T005838-7552-evolve","s":"evolve","tool":"pg_probe","d":false,"x":"","r":null,"o":null}
+{"t":"01:05:01.446","ty":"agent_tool","i":"inc-20261021T005838-7552-evolve","s":"evolve","tool":"write_file","d":false,"x":"/var/lib/raiden/incidents/inc-20261021T005838-7552/evolve/notes.md","r":null,"o":null}
+{"t":"01:05:29.611","ty":"agent_tool","i":"inc-20261021T005838-7552-evolve","s":"evolve","tool":"write_file","d":false,"x":"/var/lib/raiden/incidents/inc-20261021T005838-7552/evolve/report.md","r":null,"o":null}
+{"t":"01:05:34.580","ty":"agent_tool","i":"inc-20261021T005838-7552-evolve","s":"evolve","tool":"edit_file","d":false,"x":"/var/lib/raiden/memory/lessons.md","r":null,"o":null}
+{"t":"01:05:46.696","ty":"agent_tool","i":"inc-20261021T005838-7552-evolve","s":"evolve","tool":"edit_file","d":false,"x":"/var/lib/raiden/memory/evolution.md","r":null,"o":null}
+{"t":"01:05:50.578","ty":"agent_tool","i":"inc-20261021T005838-7552-evolve","s":"evolve","tool":"finish","d":false,"x":"Installed and proved ledger table-drop protection, including rejection for arena-owned scratch tables. Added v","r":null,"o":null}
+{"t":"01:05:50.621","ty":"evolution_done","i":"inc-20261021T005838-7552","s":null,"tool":null,"d":null,"x":"Installed and proved ledger table-drop protection, including rejection for arena-owned scratch tables. Added v","r":null,"o":null}
+{"t":"01:05:50.908","ty":"incident_settled","i":"inc-20261021T005838-7552","s":null,"tool":null,"d":null,"x":"","r":null,"o":"resolved"}
+{"t":"01:07:12.848","ty":"incident_opened","i":"inc-20261021T010712-42b2","s":null,"tool":null,"d":null,"x":"","r":null,"o":null}
+{"t":"01:07:12.848","ty":"incident_dispatched","i":"inc-20261021T010712-42b2","s":null,"tool":null,"d":null,"x":"","r":null,"o":null}
+{"t":"01:07:14.798","ty":"agent_tool","i":"inc-20261021T010712-42b2","s":"incident","tool":"load_skill","d":false,"x":"pg-triage","r":null,"o":null}
+{"t":"01:07:18.425","ty":"agent_tool","i":"inc-20261021T010712-42b2","s":"incident","tool":"load_skill","d":false,"x":"connection-storm","r":null,"o":null}
+{"t":"01:07:18.446","ty":"agent_tool","i":"inc-20261021T010712-42b2","s":"incident","tool":"pg_probe","d":false,"x":"","r":null,"o":null}
+{"t":"01:07:18.909","ty":"agent_tool","i":"inc-20261021T010712-42b2","s":"incident","tool":"bash","d":false,"x":"/opt/raiden/.claude/skills/pg-triage/scripts/snapshot.sh 30 | tee \"$RAIDEN_INCIDENT_DIR/snapshot.txt\"","r":null,"o":null}
+{"t":"01:07:18.909","ty":"agent_tool","i":"inc-20261021T010712-42b2","s":"incident","tool":"read_file","d":false,"x":"/var/lib/raiden/memory/protections.list","r":null,"o":null}
+{"t":"01:07:18.909","ty":"agent_tool","i":"inc-20261021T010712-42b2","s":"incident","tool":"read_file","d":false,"x":"/var/lib/raiden/memory/evolution.md","r":null,"o":null}
+{"t":"01:07:29.466","ty":"agent_tool","i":"inc-20261021T010712-42b2","s":"incident","tool":"bash","d":false,"x":"PGCONNECT_TIMEOUT=3 psql -X -d postgres -c \"SELECT usename, application_name, client_addr, state, wait_event_t","r":null,"o":null}
+{"t":"01:07:39.851","ty":"agent_tool","i":"inc-20261021T010712-42b2","s":"incident","tool":"write_file","d":false,"x":"$RAIDEN_INCIDENT_DIR/notes.md","r":null,"o":null}
+{"t":"01:07:54.438","ty":"agent_tool","i":"inc-20261021T010712-42b2","s":"incident","tool":"bash","d":false,"x":"PGCONNECT_TIMEOUT=3 psql -X -At -d postgres -c \"SELECT rolname,rolsuper,rolconnlimit,rolconfig FROM pg_roles W","r":null,"o":null}
+{"t":"01:07:59.532","ty":"agent_tool","i":"inc-20261021T010712-42b2","s":"incident","tool":"load_skill","d":false,"x":"hardening-after-incident","r":null,"o":null}
+{"t":"01:07:59.534","ty":"agent_tool","i":"inc-20261021T010712-42b2","s":"incident","tool":"load_skill","d":false,"x":"postgres-best-practices","r":null,"o":null}
+{"t":"01:07:59.534","ty":"agent_tool","i":"inc-20261021T010712-42b2","s":"incident","tool":"load_skill","d":false,"x":"data-loss-verification","r":null,"o":null}
+{"t":"01:07:59.566","ty":"agent_tool","i":"inc-20261021T010712-42b2","s":"incident","tool":"bash","d":false,"x":"date -u +%FT%TZ; PGCONNECT_TIMEOUT=3 psql -X -d postgres -c \"SELECT rolname,rolconnlimit,rolconfig FROM pg_rol","r":null,"o":null}
+{"t":"01:08:06.798","ty":"agent_tool","i":"inc-20261021T010712-42b2","s":"incident","tool":"edit_file","d":false,"x":"$RAIDEN_INCIDENT_DIR/notes.md","r":null,"o":null}
+{"t":"01:10:05.847","ty":"agent_tool","i":"inc-20261021T010712-42b2","s":"incident","tool":"bash","d":false,"x":"sleep 110; date -u +%FT%TZ; PGCONNECT_TIMEOUT=3 psql -X -d postgres -c \"SELECT usename,state,count(*) FROM pg_","r":null,"o":null}
+{"t":"01:10:10.444","ty":"agent_tool","i":"inc-20261021T010712-42b2","s":"incident","tool":"pg_probe","d":false,"x":"","r":null,"o":null}
+{"t":"01:10:10.444","ty":"agent_tool","i":"inc-20261021T010712-42b2","s":"incident","tool":"read_file","d":false,"x":"/var/lib/raiden/memory/lessons.md","r":null,"o":null}
+{"t":"01:10:10.485","ty":"agent_tool","i":"inc-20261021T010712-42b2","s":"incident","tool":"bash","d":false,"x":"jq -Rr 'fromjson? | select(.timestamp >= \"2026-10-21 01:07:30\" and (.message|test(\"ALTER ROLE reporting|termin","r":null,"o":null}
+{"t":"01:10:41.084","ty":"agent_tool","i":"inc-20261021T010712-42b2","s":"incident","tool":"write_file","d":false,"x":"$RAIDEN_INCIDENT_DIR/report.md","r":null,"o":null}
+{"t":"01:10:43.851","ty":"agent_tool","i":"inc-20261021T010712-42b2","s":"incident","tool":"bash","d":false,"x":"/bin/cp /var/lib/raiden/memory/lessons.md \"$RAIDEN_INCIDENT_DIR/lessons.before.md\"","r":null,"o":null}
+{"t":"01:10:51.431","ty":"agent_tool","i":"inc-20261021T010712-42b2","s":"incident","tool":"edit_file","d":false,"x":"/var/lib/raiden/memory/lessons.md","r":null,"o":null}
+{"t":"01:10:57.267","ty":"agent_tool","i":"inc-20261021T010712-42b2","s":"incident","tool":"bash","d":false,"x":"/usr/bin/tail -n 1 /var/lib/raiden/memory/lessons.md","r":null,"o":null}
+{"t":"01:11:02.163","ty":"agent_tool","i":"inc-20261021T010712-42b2","s":"incident","tool":"edit_file","d":false,"x":"/var/lib/raiden/memory/lessons.md","r":null,"o":null}
+{"t":"01:11:08.190","ty":"agent_tool","i":"inc-20261021T010712-42b2","s":"incident","tool":"edit_file","d":false,"x":"$RAIDEN_INCIDENT_DIR/notes.md","r":null,"o":null}
+{"t":"01:11:12.359","ty":"agent_tool","i":"inc-20261021T010712-42b2","s":"incident","tool":"finish","d":false,"x":"Capped unlimited reporting fan-out at 10 connections with idle timeouts and disconnected 92 idle reporting cli","r":null,"o":null}
+{"t":"01:11:12.360","ty":"incident_closed","i":"inc-20261021T010712-42b2","s":null,"tool":null,"d":0,"x":"Capped unlimited reporting fan-out at 10 connections with idle timeouts and disconnected 92 idle reporting cli","r":null,"o":"resolved"}
+{"t":"01:11:57.400","ty":"incident_verified_quiet","i":"inc-20261021T010712-42b2","s":null,"tool":null,"d":null,"x":"","r":null,"o":null}
+{"t":"01:11:57.402","ty":"evolution_started","i":"inc-20261021T010712-42b2","s":null,"tool":null,"d":null,"x":"","r":null,"o":null}
+{"t":"01:12:02.004","ty":"agent_tool","i":"inc-20261021T010712-42b2-evolve","s":"evolve","tool":"read_file","d":false,"x":"/var/lib/raiden/incidents/inc-20261021T010712-42b2/report.md","r":null,"o":null}
+{"t":"01:12:02.004","ty":"agent_tool","i":"inc-20261021T010712-42b2-evolve","s":"evolve","tool":"read_file","d":false,"x":"/var/lib/raiden/memory/lessons.md","r":null,"o":null}
+{"t":"01:12:02.005","ty":"agent_tool","i":"inc-20261021T010712-42b2-evolve","s":"evolve","tool":"read_file","d":false,"x":"/var/lib/raiden/memory/evolution.md","r":null,"o":null}
+{"t":"01:12:02.005","ty":"agent_tool","i":"inc-20261021T010712-42b2-evolve","s":"evolve","tool":"read_file","d":false,"x":"/var/lib/raiden/memory/protections.list","r":null,"o":null}
+{"t":"01:12:02.008","ty":"agent_tool","i":"inc-20261021T010712-42b2-evolve","s":"evolve","tool":"bash","d":false,"x":"/usr/bin/tail -n 100 /var/lib/raiden/audit.jsonl","r":null,"o":null}
+{"t":"01:12:02.009","ty":"agent_tool","i":"inc-20261021T010712-42b2-evolve","s":"evolve","tool":"load_skill","d":false,"x":"hardening-after-incident","r":null,"o":null}
+{"t":"01:12:02.009","ty":"agent_tool","i":"inc-20261021T010712-42b2-evolve","s":"evolve","tool":"load_skill","d":false,"x":"pg-triage","r":null,"o":null}
+{"t":"01:12:07.338","ty":"agent_tool","i":"inc-20261021T010712-42b2-evolve","s":"evolve","tool":"load_skill","d":false,"x":"preventive-protections","r":null,"o":null}
+{"t":"01:12:07.360","ty":"agent_tool","i":"inc-20261021T010712-42b2-evolve","s":"evolve","tool":"pg_probe","d":false,"x":"","r":null,"o":null}
+{"t":"01:12:07.375","ty":"agent_tool","i":"inc-20261021T010712-42b2-evolve","s":"evolve","tool":"bash","d":false,"x":"/usr/bin/jq -c 'select(.incident == \"inc-20261021T010712-42b2\")' /var/lib/raiden/audit.jsonl; /bin/ls /opt/rai","r":null,"o":null}
+{"t":"01:12:19.052","ty":"agent_tool","i":"inc-20261021T010712-42b2-evolve","s":"evolve","tool":"read_file","d":false,"x":"/opt/raiden/checks.d/90-protections.sh","r":null,"o":null}
+{"t":"01:12:19.053","ty":"agent_tool","i":"inc-20261021T010712-42b2-evolve","s":"evolve","tool":"read_file","d":false,"x":"/opt/raiden/checks.d/60-sessions.sh","r":null,"o":null}
+{"t":"01:12:19.207","ty":"agent_tool","i":"inc-20261021T010712-42b2-evolve","s":"evolve","tool":"bash","d":false,"x":"/opt/raiden/venv/bin/python -c 'import psycopg; print(psycopg.__version__)'; /bin/cp /var/lib/raiden/memory/pr","r":null,"o":null}
+{"t":"01:12:30.964","ty":"agent_tool","i":"inc-20261021T010712-42b2-evolve","s":"evolve","tool":"write_file","d":false,"x":"/var/lib/raiden/incidents/inc-20261021T010712-42b2/evolve/notes.md","r":null,"o":null}
+{"t":"01:12:47.583","ty":"agent_tool","i":"inc-20261021T010712-42b2-evolve","s":"evolve","tool":"write_file","d":false,"x":"/var/lib/raiden/work/prove_reporting_role_limits.py","r":null,"o":null}
+{"t":"01:12:50.737","ty":"agent_tool","i":"inc-20261021T010712-42b2-evolve","s":"evolve","tool":"bash","d":false,"x":"/usr/bin/timeout 45 /opt/raiden/venv/bin/python /var/lib/raiden/work/prove_reporting_role_limits.py; PGCONNECT","r":null,"o":null}
+{"t":"01:13:02.311","ty":"agent_tool","i":"inc-20261021T010712-42b2-evolve","s":"evolve","tool":"edit_file","d":false,"x":"/var/lib/raiden/memory/protections.list","r":null,"o":null}
+{"t":"01:13:21.946","ty":"agent_tool","i":"inc-20261021T010712-42b2-evolve","s":"evolve","tool":"write_file","d":false,"x":"/opt/raiden/checks.d/89-reporting-limits.sh","r":null,"o":null}
+{"t":"01:13:50.306","ty":"agent_tool","i":"inc-20261021T010712-42b2-evolve","s":"evolve","tool":"write_file","d":false,"x":"/opt/raiden/.claude/skills/learned-reporting-limits/SKILL.md","r":null,"o":null}
+{"t":"01:13:59.389","ty":"agent_tool","i":"inc-20261021T010712-42b2-evolve","s":"evolve","tool":"bash","d":false,"x":"/bin/bash -n /opt/raiden/checks.d/89-reporting-limits.sh; /bin/chmod 755 /opt/raiden/checks.d/89-reporting-lim","r":null,"o":null}
+{"t":"01:14:06.026","ty":"agent_tool","i":"inc-20261021T010712-42b2-evolve","s":"evolve","tool":"load_skill","d":false,"x":"learned-reporting-limits","r":null,"o":null}
+{"t":"01:14:07.782","ty":"agent_tool","i":"inc-20261021T010712-42b2-evolve","s":"evolve","tool":"bash","d":false,"x":"/bin/bash /opt/raiden/.claude/skills/health-patrol/scripts/run_checks.sh; echo patrol_rc=$?; PGCONNECT_TIMEOUT","r":null,"o":null}
+{"t":"01:14:11.336","ty":"agent_tool","i":"inc-20261021T010712-42b2-evolve","s":"evolve","tool":"pg_probe","d":false,"x":"","r":null,"o":null}
+{"t":"01:14:41.240","ty":"agent_tool","i":"inc-20261021T010712-42b2-evolve","s":"evolve","tool":"write_file","d":false,"x":"/var/lib/raiden/incidents/inc-20261021T010712-42b2/evolve/report.md","r":null,"o":null}
+{"t":"01:14:47.346","ty":"agent_tool","i":"inc-20261021T010712-42b2-evolve","s":"evolve","tool":"edit_file","d":false,"x":"/var/lib/raiden/memory/lessons.md","r":null,"o":null}
+{"t":"01:15:02.148","ty":"agent_tool","i":"inc-20261021T010712-42b2-evolve","s":"evolve","tool":"edit_file","d":false,"x":"/var/lib/raiden/memory/evolution.md","r":null,"o":null}
+{"t":"01:15:05.532","ty":"agent_tool","i":"inc-20261021T010712-42b2-evolve","s":"evolve","tool":"bash","d":false,"x":"/usr/bin/tail -n 1 /var/lib/raiden/memory/evolution.md; /bin/bash /opt/raiden/checks.d/89-reporting-limits.sh;","r":null,"o":null}
+{"t":"01:15:10.446","ty":"agent_tool","i":"inc-20261021T010712-42b2-evolve","s":"evolve","tool":"finish","d":false,"x":"Registered reporting P4 cap/timeouts and proved equivalent scratch admission rejects the eleventh login. Added","r":null,"o":null}
+{"t":"01:15:10.489","ty":"evolution_done","i":"inc-20261021T010712-42b2","s":null,"tool":null,"d":null,"x":"Registered reporting P4 cap/timeouts and proved equivalent scratch admission rejects the eleventh login. Added","r":null,"o":null}
+{"t":"01:15:10.812","ty":"incident_settled","i":"inc-20261021T010712-42b2","s":null,"tool":null,"d":null,"x":"","r":null,"o":"resolved"}
+{"t":"01:16:31.377","ty":"incident_opened","i":"inc-20261021T011631-7c80","s":null,"tool":null,"d":null,"x":"","r":null,"o":null}
+{"t":"01:16:31.377","ty":"incident_dispatched","i":"inc-20261021T011631-7c80","s":null,"tool":null,"d":null,"x":"","r":null,"o":null}
+{"t":"01:16:33.224","ty":"agent_tool","i":"inc-20261021T011631-7c80","s":"incident","tool":"load_skill","d":false,"x":"pg-triage","r":null,"o":null}
+{"t":"01:16:37.145","ty":"agent_tool","i":"inc-20261021T011631-7c80","s":"incident","tool":"load_skill","d":false,"x":"connection-storm","r":null,"o":null}
+{"t":"01:16:37.168","ty":"agent_tool","i":"inc-20261021T011631-7c80","s":"incident","tool":"pg_probe","d":false,"x":"","r":null,"o":null}
+{"t":"01:16:37.179","ty":"agent_tool","i":"inc-20261021T011631-7c80","s":"incident","tool":"bash","d":false,"x":"PGCONNECT_TIMEOUT=3 psql -X -d ledger -c \"SELECT pid,usename,application_name,state,xact_start,wait_event_type","r":null,"o":null}
+{"t":"01:16:37.183","ty":"agent_tool","i":"inc-20261021T011631-7c80","s":"incident","tool":"bash","d":false,"x":"/usr/bin/cat /var/lib/raiden/memory/protections.list /var/lib/raiden/memory/evolution.md","r":null,"o":null}
+{"t":"01:16:43.828","ty":"agent_tool","i":"inc-20261021T011631-7c80","s":"incident","tool":"write_file","d":false,"x":"$RAIDEN_INCIDENT_DIR/notes.md","r":null,"o":null}
+{"t":"01:16:49.410","ty":"agent_tool","i":"inc-20261021T011631-7c80","s":"incident","tool":"bash","d":false,"x":"PGCONNECT_TIMEOUT=3 psql -X -d ledger -c \"SELECT pid,usename,pg_cancel_backend(pid) FROM pg_stat_activity WHER","r":null,"o":null}
+{"t":"01:16:54.048","ty":"agent_tool","i":"inc-20261021T011631-7c80","s":"incident","tool":"load_skill","d":false,"x":"postgres-best-practices","r":null,"o":null}
+{"t":"01:16:54.048","ty":"agent_tool","i":"inc-20261021T011631-7c80","s":"incident","tool":"load_skill","d":false,"x":"hardening-after-incident","r":null,"o":null}
+{"t":"01:16:54.048","ty":"agent_tool","i":"inc-20261021T011631-7c80","s":"incident","tool":"load_skill","d":false,"x":"data-loss-verification","r":null,"o":null}
+{"t":"01:16:54.429","ty":"agent_tool","i":"inc-20261021T011631-7c80","s":"incident","tool":"bash","d":false,"x":"/opt/raiden/.claude/skills/pg-triage/scripts/snapshot.sh 10 | /usr/bin/tee \"$RAIDEN_INCIDENT_DIR/snapshot.txt\"","r":null,"o":null}
+{"t":"01:17:00.939","ty":"agent_tool","i":"inc-20261021T011631-7c80","s":"incident","tool":"edit_file","d":false,"x":"$RAIDEN_INCIDENT_DIR/notes.md","r":null,"o":null}
+{"t":"01:17:04.837","ty":"agent_tool","i":"inc-20261021T011631-7c80","s":"incident","tool":"bash","d":false,"x":"PGCONNECT_TIMEOUT=3 psql -X -At -d postgres -c \"SELECT rolname,rolconfig FROM pg_roles WHERE rolname IN ('anal","r":null,"o":null}
+{"t":"01:17:10.541","ty":"agent_tool","i":"inc-20261021T011631-7c80","s":"incident","tool":"bash","d":false,"x":"PGCONNECT_TIMEOUT=3 psql -X -U analyst -d ledger -At -c \"SHOW idle_in_transaction_session_timeout;\"; PGCONNECT","r":null,"o":null}
+{"t":"01:19:22.094","ty":"agent_tool","i":"inc-20261021T011631-7c80","s":"incident","tool":"bash","d":false,"x":"/usr/bin/sleep 120; PGCONNECT_TIMEOUT=3 psql -X -d ledger -c \"SELECT clock_timestamp(),count(*) AS rows,max(cr","r":null,"o":null}
+{"t":"01:19:22.094","ty":"agent_tool","i":"inc-20261021T011631-7c80","s":"incident","tool":"read_file","d":false,"x":"/var/lib/raiden/memory/lessons.md","r":null,"o":null}
+{"t":"01:19:27.744","ty":"agent_tool","i":"inc-20261021T011631-7c80","s":"incident","tool":"bash","d":false,"x":"/usr/bin/jq -Rr 'fromjson? | select(.timestamp > \"2026-10-21 01:16:49.307\" and ((.message|test(\"still waiting|","r":null,"o":null}
+{"t":"01:19:27.765","ty":"agent_tool","i":"inc-20261021T011631-7c80","s":"incident","tool":"pg_probe","d":false,"x":"","r":null,"o":null}
+{"t":"01:19:34.120","ty":"agent_tool","i":"inc-20261021T011631-7c80","s":"incident","tool":"edit_file","d":false,"x":"/var/lib/raiden/memory/lessons.md","r":null,"o":null}
+{"t":"01:19:42.409","ty":"agent_tool","i":"inc-20261021T011631-7c80","s":"incident","tool":"edit_file","d":false,"x":"$RAIDEN_INCIDENT_DIR/notes.md","r":null,"o":null}
+{"t":"01:20:14.843","ty":"agent_tool","i":"inc-20261021T011631-7c80","s":"incident","tool":"write_file","d":false,"x":"$RAIDEN_INCIDENT_DIR/report.md","r":null,"o":null}
+{"t":"01:20:17.923","ty":"agent_tool","i":"inc-20261021T011631-7c80","s":"incident","tool":"finish","d":false,"x":"Canceled waiting migrator lock and terminated idle analyst blocker, draining ledger queue after ~26 seconds. A","r":null,"o":null}
+{"t":"01:20:17.923","ty":"incident_closed","i":"inc-20261021T011631-7c80","s":null,"tool":null,"d":0,"x":"Canceled waiting migrator lock and terminated idle analyst blocker, draining ledger queue after ~26 seconds. A","r":null,"o":"resolved"}
+{"t":"01:21:02.957","ty":"incident_verified_quiet","i":"inc-20261021T011631-7c80","s":null,"tool":null,"d":null,"x":"","r":null,"o":null}
+{"t":"01:21:02.959","ty":"evolution_started","i":"inc-20261021T011631-7c80","s":null,"tool":null,"d":null,"x":"","r":null,"o":null}
+{"t":"01:21:08.610","ty":"agent_tool","i":"inc-20261021T011631-7c80-evolve","s":"evolve","tool":"read_file","d":false,"x":"/var/lib/raiden/incidents/inc-20261021T011631-7c80/report.md","r":null,"o":null}
+{"t":"01:21:08.610","ty":"agent_tool","i":"inc-20261021T011631-7c80-evolve","s":"evolve","tool":"read_file","d":false,"x":"/var/lib/raiden/memory/lessons.md","r":null,"o":null}
+{"t":"01:21:08.611","ty":"agent_tool","i":"inc-20261021T011631-7c80-evolve","s":"evolve","tool":"read_file","d":false,"x":"/var/lib/raiden/memory/evolution.md","r":null,"o":null}
+{"t":"01:21:08.611","ty":"agent_tool","i":"inc-20261021T011631-7c80-evolve","s":"evolve","tool":"read_file","d":false,"x":"/var/lib/raiden/memory/protections.list","r":null,"o":null}
+{"t":"01:21:08.614","ty":"agent_tool","i":"inc-20261021T011631-7c80-evolve","s":"evolve","tool":"bash","d":false,"x":"tail -n 75 /var/lib/raiden/audit.jsonl","r":null,"o":null}
+{"t":"01:21:08.615","ty":"agent_tool","i":"inc-20261021T011631-7c80-evolve","s":"evolve","tool":"load_skill","d":false,"x":"hardening-after-incident","r":null,"o":null}
+{"t":"01:21:12.080","ty":"agent_tool","i":"inc-20261021T011631-7c80-evolve","s":"evolve","tool":"load_skill","d":false,"x":"preventive-protections","r":null,"o":null}
+{"t":"01:21:12.081","ty":"agent_tool","i":"inc-20261021T011631-7c80-evolve","s":"evolve","tool":"load_skill","d":false,"x":"pg-triage","r":null,"o":null}
+{"t":"01:21:12.109","ty":"agent_tool","i":"inc-20261021T011631-7c80-evolve","s":"evolve","tool":"pg_probe","d":false,"x":"","r":null,"o":null}
+{"t":"01:21:12.117","ty":"agent_tool","i":"inc-20261021T011631-7c80-evolve","s":"evolve","tool":"bash","d":false,"x":"ls /opt/raiden/checks.d /opt/raiden/.claude/skills; cat /var/lib/raiden/work/prove_reporting_role_limits.py; c","r":null,"o":null}
+{"t":"01:21:16.583","ty":"agent_tool","i":"inc-20261021T011631-7c80-evolve","s":"evolve","tool":"bash","d":false,"x":"cat /opt/raiden/.claude/skills/preventive-protections/scripts/prove_lock_timeout.sh; PGCONNECT_TIMEOUT=3 psql ","r":null,"o":null}
+{"t":"01:21:30.227","ty":"agent_tool","i":"inc-20261021T011631-7c80-evolve","s":"evolve","tool":"write_file","d":false,"x":"/var/lib/raiden/incidents/inc-20261021T011631-7c80/evolve/notes.md","r":null,"o":null}
+{"t":"01:21:39.321","ty":"patrol_run","i":null,"s":null,"tool":null,"d":null,"x":"","r":null,"o":null}
+{"t":"01:21:45.167","ty":"agent_tool","i":"inc-20261021T011631-7c80-evolve","s":"evolve","tool":"bash","d":false,"x":"bash /opt/raiden/.claude/skills/preventive-protections/scripts/prove_lock_timeout.sh migrator | tee /var/lib/r","r":null,"o":null}
+{"t":"01:22:07.429","ty":"agent_tool","i":"inc-20261021T011631-7c80-evolve","s":"evolve","tool":"write_file","d":false,"x":"/var/lib/raiden/work/prove_lock_queue_defaults.py","r":null,"o":null}
+{"t":"01:22:28.744","ty":"agent_tool","i":"inc-20261021T011631-7c80-evolve","s":"evolve","tool":"bash","d":false,"x":"set -o pipefail; timeout 45 /opt/raiden/venv/bin/python /var/lib/raiden/work/prove_lock_queue_defaults.py | te","r":null,"o":null}
+{"t":"01:22:32.679","ty":"agent_tool","i":"inc-20261021T011631-7c80-evolve","s":"evolve","tool":"bash","d":false,"x":"/bin/cp /var/lib/raiden/work/prove_lock_queue_defaults.py /var/lib/raiden/work/prove_lock_queue_defaults.py.be","r":null,"o":null}
+{"t":"01:22:35.983","ty":"agent_tool","i":"inc-20261021T011631-7c80-evolve","s":"evolve","tool":"edit_file","d":false,"x":"/var/lib/raiden/work/prove_lock_queue_defaults.py","r":null,"o":null}
+{"t":"01:22:56.231","ty":"agent_tool","i":"inc-20261021T011631-7c80-evolve","s":"evolve","tool":"bash","d":false,"x":"set -o pipefail; timeout 45 /opt/raiden/venv/bin/python /var/lib/raiden/work/prove_lock_queue_defaults.py | te","r":null,"o":null}
+{"t":"01:23:00.882","ty":"agent_tool","i":"inc-20261021T011631-7c80-evolve","s":"evolve","tool":"edit_file","d":false,"x":"/var/lib/raiden/memory/protections.list","r":null,"o":null}
+{"t":"01:23:19.732","ty":"agent_tool","i":"inc-20261021T011631-7c80-evolve","s":"evolve","tool":"write_file","d":false,"x":"/opt/raiden/checks.d/89-lock-queue.sh","r":null,"o":null}
+{"t":"01:23:43.574","ty":"agent_tool","i":"inc-20261021T011631-7c80-evolve","s":"evolve","tool":"write_file","d":false,"x":"/opt/raiden/.claude/skills/learned-lock-queue/SKILL.md","r":null,"o":null}
+{"t":"01:23:52.135","ty":"agent_tool","i":"inc-20261021T011631-7c80-evolve","s":"evolve","tool":"bash","d":false,"x":"bash -n /opt/raiden/checks.d/89-lock-queue.sh; chmod 755 /opt/raiden/checks.d/89-lock-queue.sh; if command -v ","r":null,"o":null}
+{"t":"01:23:52.135","ty":"agent_tool","i":"inc-20261021T011631-7c80-evolve","s":"evolve","tool":"load_skill","d":false,"x":"learned-lock-queue","r":null,"o":null}
+{"t":"01:23:54.124","ty":"agent_tool","i":"inc-20261021T011631-7c80-evolve","s":"evolve","tool":"bash","d":false,"x":"PGCONNECT_TIMEOUT=3 psql -X -d ledger -c \"SELECT pid,usename,state,now()-state_change AS state_age,wait_event_","r":null,"o":null}
+{"t":"01:24:00.466","ty":"agent_tool","i":"inc-20261021T011631-7c80-evolve","s":"evolve","tool":"bash","d":false,"x":"/opt/raiden/venv/bin/python -c 'from pathlib import Path; p=Path(\"/opt/raiden/.claude/skills/learned-lock-queu","r":null,"o":null}
+{"t":"01:24:04.946","ty":"agent_tool","i":"inc-20261021T011631-7c80-evolve","s":"evolve","tool":"edit_file","d":false,"x":"/var/lib/raiden/memory/protections.list","r":null,"o":null}
+{"t":"01:24:08.163","ty":"agent_tool","i":"inc-20261021T011631-7c80-evolve","s":"evolve","tool":"pg_probe","d":false,"x":"","r":null,"o":null}
+{"t":"01:24:33.196","ty":"agent_tool","i":"inc-20261021T011631-7c80-evolve","s":"evolve","tool":"write_file","d":false,"x":"/var/lib/raiden/incidents/inc-20261021T011631-7c80/evolve/report.md","r":null,"o":null}
+{"t":"01:24:35.657","ty":"agent_tool","i":"inc-20261021T011631-7c80-evolve","s":"evolve","tool":"edit_file","d":false,"x":"/var/lib/raiden/memory/lessons.md","r":null,"o":null}
+{"t":"01:24:40.720","ty":"agent_tool","i":"inc-20261021T011631-7c80-evolve","s":"evolve","tool":"edit_file","d":false,"x":"/var/lib/raiden/memory/lessons.md","r":null,"o":null}
+{"t":"01:24:56.026","ty":"agent_tool","i":"inc-20261021T011631-7c80-evolve","s":"evolve","tool":"edit_file","d":false,"x":"/var/lib/raiden/memory/evolution.md","r":null,"o":null}
+{"t":"01:24:59.438","ty":"agent_tool","i":"inc-20261021T011631-7c80-evolve","s":"evolve","tool":"bash","d":false,"x":"tail -n 1 /var/lib/raiden/memory/evolution.md; bash /opt/raiden/checks.d/89-lock-queue.sh; bash /opt/raiden/ch","r":null,"o":null}
+{"t":"01:25:03.681","ty":"agent_tool","i":"inc-20261021T011631-7c80-evolve","s":"evolve","tool":"finish","d":false,"x":"Registered P5 and proved equivalent fresh-logins cancel migrator LOCK after 3.001s and expire idle analyst tra","r":null,"o":null}
+{"t":"01:25:03.725","ty":"evolution_done","i":"inc-20261021T011631-7c80","s":null,"tool":null,"d":null,"x":"Registered P5 and proved equivalent fresh-logins cancel migrator LOCK after 3.001s and expire idle analyst tra","r":null,"o":null}
+{"t":"01:25:04.029","ty":"incident_settled","i":"inc-20261021T011631-7c80","s":null,"tool":null,"d":null,"x":"","r":null,"o":"resolved"}
+{"t":"01:25:04.931","ty":"incident_opened","i":"inc-20261021T012504-bb45","s":null,"tool":null,"d":null,"x":"","r":null,"o":null}
+{"t":"01:25:04.931","ty":"incident_dispatched","i":"inc-20261021T012504-bb45","s":null,"tool":null,"d":null,"x":"","r":null,"o":null}
+{"t":"01:25:08.147","ty":"agent_tool","i":"inc-20261021T012504-bb45","s":"incident","tool":"load_skill","d":false,"x":"pg-triage","r":null,"o":null}
+{"t":"01:25:12.500","ty":"agent_tool","i":"inc-20261021T012504-bb45","s":"incident","tool":"pg_probe","d":false,"x":"","r":null,"o":null}
+{"t":"01:25:12.500","ty":"agent_tool","i":"inc-20261021T012504-bb45","s":"incident","tool":"load_skill","d":false,"x":"learned-lock-queue","r":null,"o":null}
+{"t":"01:25:12.882","ty":"agent_tool","i":"inc-20261021T012504-bb45","s":"incident","tool":"bash","d":false,"x":"/opt/raiden/.claude/skills/pg-triage/scripts/snapshot.sh 10 | tee \"$RAIDEN_INCIDENT_DIR/snapshot.txt\"","r":null,"o":null}
+{"t":"01:25:12.882","ty":"agent_tool","i":"inc-20261021T012504-bb45","s":"incident","tool":"read_file","d":false,"x":"/var/lib/raiden/memory/protections.list","r":null,"o":null}
+{"t":"01:25:12.882","ty":"agent_tool","i":"inc-20261021T012504-bb45","s":"incident","tool":"read_file","d":false,"x":"/var/lib/raiden/memory/evolution.md","r":null,"o":null}
+{"t":"01:25:23.016","ty":"agent_tool","i":"inc-20261021T012504-bb45","s":"incident","tool":"bash","d":false,"x":"PGCONNECT_TIMEOUT=3 psql -X -d ledger -c \"SELECT pid,usename,application_name,state,now()-state_change AS stat","r":null,"o":null}
+{"t":"01:25:23.067","ty":"agent_tool","i":"inc-20261021T012504-bb45","s":"incident","tool":"bash","d":false,"x":"jq -Rr 'fromjson? | select(.timestamp >= \"2026-10-21 01:22:10\" and .timestamp <= \"2026-10-21 01:23:00\" and (.p","r":null,"o":null}
+{"t":"01:25:23.068","ty":"agent_tool","i":"inc-20261021T012504-bb45","s":"incident","tool":"read_file","d":false,"x":"/var/lib/raiden/work/prove_lock_queue_defaults.py","r":null,"o":null}
+{"t":"01:25:23.068","ty":"agent_tool","i":"inc-20261021T012504-bb45","s":"incident","tool":"load_skill","d":false,"x":"hardening-after-incident","r":null,"o":null}
+{"t":"01:25:33.872","ty":"agent_tool","i":"inc-20261021T012504-bb45","s":"incident","tool":"write_file","d":false,"x":"$RAIDEN_INCIDENT_DIR/notes.md","r":null,"o":null}
+{"t":"01:25:43.100","ty":"agent_tool","i":"inc-20261021T012504-bb45","s":"incident","tool":"bash","d":false,"x":"/opt/raiden/venv/bin/python /opt/arena/ledger.py reconcile --json | tee \"$RAIDEN_INCIDENT_DIR/reconcile.json\";","r":null,"o":null}
+{"t":"01:26:18.183","ty":"agent_tool","i":"inc-20261021T012504-bb45","s":"incident","tool":"bash","d":false,"x":"PGCONNECT_TIMEOUT=3 psql -X -At -d ledger -c \"SELECT clock_timestamp(),count(*),max(id) FROM public.entries;\";","r":null,"o":null}
+{"t":"01:26:18.183","ty":"agent_tool","i":"inc-20261021T012504-bb45","s":"incident","tool":"read_file","d":false,"x":"/var/lib/raiden/memory/lessons.md","r":null,"o":null}
+{"t":"01:26:24.785","ty":"agent_tool","i":"inc-20261021T012504-bb45","s":"incident","tool":"pg_probe","d":false,"x":"","r":null,"o":null}
+{"t":"01:26:57.439","ty":"agent_tool","i":"inc-20261021T012504-bb45","s":"incident","tool":"write_file","d":false,"x":"$RAIDEN_INCIDENT_DIR/report.md","r":null,"o":null}
+{"t":"01:26:59.696","ty":"agent_tool","i":"inc-20261021T012504-bb45","s":"incident","tool":"bash","d":false,"x":"cp /var/lib/raiden/memory/lessons.md \"$RAIDEN_INCIDENT_DIR/lessons-before.md\"","r":null,"o":null}
+{"t":"01:27:06.559","ty":"agent_tool","i":"inc-20261021T012504-bb45","s":"incident","tool":"edit_file","d":false,"x":"/var/lib/raiden/memory/lessons.md","r":null,"o":null}
+{"t":"01:27:09.796","ty":"agent_tool","i":"inc-20261021T012504-bb45","s":"incident","tool":"finish","d":false,"x":"Both lock alerts were expected isolated P5 scratch-proof timeouts, not production lock queues. Verified scratc","r":null,"o":null}
+{"t":"01:27:09.797","ty":"incident_closed","i":"inc-20261021T012504-bb45","s":null,"tool":null,"d":0,"x":"Both lock alerts were expected isolated P5 scratch-proof timeouts, not production lock queues. Verified scratc","r":null,"o":"resolved"}
+{"t":"01:27:54.843","ty":"incident_verified_quiet","i":"inc-20261021T012504-bb45","s":null,"tool":null,"d":null,"x":"","r":null,"o":null}
+{"t":"01:27:54.846","ty":"evolution_started","i":"inc-20261021T012504-bb45","s":null,"tool":null,"d":null,"x":"","r":null,"o":null}
+{"t":"01:27:59.948","ty":"agent_tool","i":"inc-20261021T012504-bb45-evolve","s":"evolve","tool":"read_file","d":false,"x":"/var/lib/raiden/incidents/inc-20261021T012504-bb45/report.md","r":null,"o":null}
+{"t":"01:27:59.948","ty":"agent_tool","i":"inc-20261021T012504-bb45-evolve","s":"evolve","tool":"read_file","d":false,"x":"/var/lib/raiden/memory/lessons.md","r":null,"o":null}
+{"t":"01:27:59.948","ty":"agent_tool","i":"inc-20261021T012504-bb45-evolve","s":"evolve","tool":"read_file","d":false,"x":"/var/lib/raiden/memory/evolution.md","r":null,"o":null}
+{"t":"01:27:59.948","ty":"agent_tool","i":"inc-20261021T012504-bb45-evolve","s":"evolve","tool":"read_file","d":false,"x":"/var/lib/raiden/memory/protections.list","r":null,"o":null}
+{"t":"01:27:59.952","ty":"agent_tool","i":"inc-20261021T012504-bb45-evolve","s":"evolve","tool":"bash","d":false,"x":"tail -n 75 /var/lib/raiden/audit.jsonl","r":null,"o":null}
+{"t":"01:27:59.952","ty":"agent_tool","i":"inc-20261021T012504-bb45-evolve","s":"evolve","tool":"load_skill","d":false,"x":"hardening-after-incident","r":null,"o":null}
+{"t":"01:28:11.457","ty":"agent_tool","i":"inc-20261021T012504-bb45-evolve","s":"evolve","tool":"load_skill","d":false,"x":"preventive-protections","r":null,"o":null}
+{"t":"01:28:11.457","ty":"agent_tool","i":"inc-20261021T012504-bb45-evolve","s":"evolve","tool":"load_skill","d":false,"x":"pg-triage","r":null,"o":null}
+{"t":"01:28:11.480","ty":"agent_tool","i":"inc-20261021T012504-bb45-evolve","s":"evolve","tool":"pg_probe","d":false,"x":"","r":null,"o":null}
+{"t":"01:28:11.480","ty":"agent_tool","i":"inc-20261021T012504-bb45-evolve","s":"evolve","tool":"read_file","d":false,"x":"/var/lib/raiden/work/prove_lock_queue_defaults.py","r":null,"o":null}
+{"t":"01:28:11.488","ty":"agent_tool","i":"inc-20261021T012504-bb45-evolve","s":"evolve","tool":"bash","d":false,"x":"ls /opt/raiden/checks.d /opt/raiden/.claude/skills; jq -r 'select(.incident==\"inc-20261021T012504-bb45\" or (.i","r":null,"o":null}
+{"t":"01:28:34.536","ty":"agent_tool","i":"inc-20261021T012504-bb45-evolve","s":"evolve","tool":"read_file","d":false,"x":"/opt/raiden/checks.d/90-protections.sh","r":null,"o":null}
+{"t":"01:28:34.536","ty":"agent_tool","i":"inc-20261021T012504-bb45-evolve","s":"evolve","tool":"read_file","d":false,"x":"/opt/raiden/.claude/skills/learned-lock-queue/SKILL.md","r":null,"o":null}
+{"t":"01:28:34.548","ty":"agent_tool","i":"inc-20261021T012504-bb45-evolve","s":"evolve","tool":"bash","d":false,"x":"PGCONNECT_TIMEOUT=3 psql -X -At -d postgres -c \"SELECT system_identifier FROM pg_control_system(); SHOW log_lo","r":null,"o":null}
+{"t":"01:28:50.825","ty":"agent_tool","i":"inc-20261021T012504-bb45-evolve","s":"evolve","tool":"write_file","d":false,"x":"$RAIDEN_INCIDENT_DIR/notes.md","r":null,"o":null}
+{"t":"01:29:03.592","ty":"agent_tool","i":"inc-20261021T012504-bb45-evolve","s":"evolve","tool":"bash","d":false,"x":"cp /var/lib/raiden/work/prove_lock_queue_defaults.py /var/lib/raiden/incidents/inc-20261021T012504-bb45/evolve","r":null,"o":null}
+{"t":"01:29:14.713","ty":"agent_tool","i":"inc-20261021T012504-bb45-evolve","s":"evolve","tool":"edit_file","d":false,"x":"/var/lib/raiden/work/prove_lock_queue_defaults.py","r":null,"o":null}
+{"t":"01:29:19.035","ty":"agent_tool","i":"inc-20261021T012504-bb45-evolve","s":"evolve","tool":"edit_file","d":false,"x":"/var/lib/raiden/work/prove_lock_queue_defaults.py","r":null,"o":null}
+{"t":"01:29:22.776","ty":"agent_tool","i":"inc-20261021T012504-bb45-evolve","s":"evolve","tool":"edit_file","d":false,"x":"/var/lib/raiden/work/prove_lock_queue_defaults.py","r":null,"o":null}
+{"t":"01:29:30.021","ty":"agent_tool","i":"inc-20261021T012504-bb45-evolve","s":"evolve","tool":"bash","d":false,"x":"timeout 10 /opt/raiden/venv/bin/python /var/lib/raiden/work/prove_lock_queue_defaults.py; echo default_rc=$?; ","r":null,"o":null}
+{"t":"01:29:33.960","ty":"agent_tool","i":"inc-20261021T012504-bb45-evolve","s":"evolve","tool":"write_file","d":false,"x":"/var/lib/raiden/memory/scratch-proof-guard.baseline","r":null,"o":null}
+{"t":"01:29:43.586","ty":"agent_tool","i":"inc-20261021T012504-bb45-evolve","s":"evolve","tool":"write_file","d":false,"x":"/opt/raiden/checks.d/89-scratch-proof-guard.sh","r":null,"o":null}
+{"t":"01:29:47.494","ty":"agent_tool","i":"inc-20261021T012504-bb45-evolve","s":"evolve","tool":"edit_file","d":false,"x":"/opt/raiden/checks.d/90-protections.sh","r":null,"o":null}
+{"t":"01:29:51.545","ty":"agent_tool","i":"inc-20261021T012504-bb45-evolve","s":"evolve","tool":"edit_file","d":false,"x":"/opt/raiden/checks.d/90-protections.sh","r":null,"o":null}
+{"t":"01:29:55.870","ty":"agent_tool","i":"inc-20261021T012504-bb45-evolve","s":"evolve","tool":"edit_file","d":false,"x":"/var/lib/raiden/memory/protections.list","r":null,"o":null}
+{"t":"01:30:18.871","ty":"agent_tool","i":"inc-20261021T012504-bb45-evolve","s":"evolve","tool":"write_file","d":false,"x":"/opt/raiden/.claude/skills/learned-scratch-proof-alert/SKILL.md","r":null,"o":null}
+{"t":"01:30:23.664","ty":"agent_tool","i":"inc-20261021T012504-bb45-evolve","s":"evolve","tool":"edit_file","d":false,"x":"/opt/raiden/.claude/skills/learned-lock-queue/SKILL.md","r":null,"o":null}
+{"t":"01:30:30.233","ty":"agent_tool","i":"inc-20261021T012504-bb45-evolve","s":"evolve","tool":"bash","d":false,"x":"bash -n /opt/raiden/checks.d/89-scratch-proof-guard.sh /opt/raiden/checks.d/90-protections.sh; chmod 755 /opt/","r":null,"o":null}
+{"t":"01:30:34.290","ty":"agent_tool","i":"inc-20261021T012504-bb45-evolve","s":"evolve","tool":"load_skill","d":false,"x":"learned-scratch-proof-alert","r":null,"o":null}
+{"t":"01:30:36.896","ty":"agent_tool","i":"inc-20261021T012504-bb45-evolve","s":"evolve","tool":"bash","d":false,"x":"/opt/raiden/.claude/skills/health-patrol/scripts/run_checks.sh; PGCONNECT_TIMEOUT=3 psql -X -d postgres -c \"SE","r":null,"o":null}
+{"t":"01:30:42.595","ty":"agent_tool","i":"inc-20261021T012504-bb45-evolve","s":"evolve","tool":"bash","d":false,"x":"PGCONNECT_TIMEOUT=3 psql -X -d ledger -c \"SELECT pid,usename,application_name,state,pg_blocking_pids(pid),quer","r":null,"o":null}
+{"t":"01:30:46.635","ty":"agent_tool","i":"inc-20261021T012504-bb45-evolve","s":"evolve","tool":"edit_file","d":false,"x":"/var/lib/raiden/memory/protections.list","r":null,"o":null}
+{"t":"01:30:49.365","ty":"agent_tool","i":"inc-20261021T012504-bb45-evolve","s":"evolve","tool":"pg_probe","d":false,"x":"","r":null,"o":null}
+{"t":"01:31:24.452","ty":"agent_tool","i":"inc-20261021T012504-bb45-evolve","s":"evolve","tool":"write_file","d":false,"x":"$RAIDEN_INCIDENT_DIR/report.md","r":null,"o":null}
+{"t":"01:31:29.026","ty":"agent_tool","i":"inc-20261021T012504-bb45-evolve","s":"evolve","tool":"edit_file","d":false,"x":"/var/lib/raiden/memory/lessons.md","r":null,"o":null}
+{"t":"01:31:32.668","ty":"agent_tool","i":"inc-20261021T012504-bb45-evolve","s":"evolve","tool":"bash","d":false,"x":"tail -n 1 /var/lib/raiden/memory/evolution.md","r":null,"o":null}
+{"t":"01:31:48.848","ty":"agent_tool","i":"inc-20261021T012504-bb45-evolve","s":"evolve","tool":"edit_file","d":false,"x":"/var/lib/raiden/memory/evolution.md","r":null,"o":null}
+{"t":"01:31:51.963","ty":"agent_tool","i":"inc-20261021T012504-bb45-evolve","s":"evolve","tool":"bash","d":false,"x":"tail -n 1 /var/lib/raiden/memory/evolution.md; bash /opt/raiden/checks.d/89-scratch-proof-guard.sh; bash /opt/","r":null,"o":null}
+{"t":"01:32:04.523","ty":"agent_tool","i":"inc-20261021T012504-bb45-evolve","s":"evolve","tool":"finish","d":false,"x":"Exact alert-producing scratch P5 helper now refuses primary before writes; original and explicit-primary invoc","r":null,"o":null}
+{"t":"01:32:04.738","ty":"evolution_done","i":"inc-20261021T012504-bb45","s":null,"tool":null,"d":null,"x":"Exact alert-producing scratch P5 helper now refuses primary before writes; original and explicit-primary invoc","r":null,"o":null}
+{"t":"01:32:05.041","ty":"incident_settled","i":"inc-20261021T012504-bb45","s":null,"tool":null,"d":null,"x":"","r":null,"o":"resolved"}
+{"t":"01:34:48.529","ty":"incident_opened","i":"inc-20261021T013448-3b98","s":null,"tool":null,"d":null,"x":"","r":null,"o":null}
+{"t":"01:34:48.529","ty":"incident_dispatched","i":"inc-20261021T013448-3b98","s":null,"tool":null,"d":null,"x":"","r":null,"o":null}
+{"t":"01:34:51.204","ty":"agent_tool","i":"inc-20261021T013448-3b98","s":"incident","tool":"load_skill","d":false,"x":"pg-triage","r":null,"o":null}
+{"t":"01:34:56.894","ty":"agent_tool","i":"inc-20261021T013448-3b98","s":"incident","tool":"load_skill","d":false,"x":"learned-table-drop-guard","r":null,"o":null}
+{"t":"01:34:56.916","ty":"agent_tool","i":"inc-20261021T013448-3b98","s":"incident","tool":"pg_probe","d":false,"x":"","r":null,"o":null}
+{"t":"01:34:57.275","ty":"agent_tool","i":"inc-20261021T013448-3b98","s":"incident","tool":"bash","d":false,"x":"/opt/raiden/.claude/skills/pg-triage/scripts/snapshot.sh 5","r":null,"o":null}
+{"t":"01:34:57.275","ty":"agent_tool","i":"inc-20261021T013448-3b98","s":"incident","tool":"read_file","d":false,"x":"/var/lib/raiden/memory/protections.list","r":null,"o":null}
+{"t":"01:34:57.276","ty":"agent_tool","i":"inc-20261021T013448-3b98","s":"incident","tool":"read_file","d":false,"x":"/var/lib/raiden/memory/evolution.md","r":null,"o":null}
+{"t":"01:35:02.588","ty":"agent_tool","i":"inc-20261021T013448-3b98","s":"incident","tool":"bash","d":false,"x":"PGCONNECT_TIMEOUT=3 psql -X -d ledger -c \"SELECT to_regclass('public.entries'); SELECT * FROM raiden.protected","r":null,"o":null}
+{"t":"01:35:02.589","ty":"agent_tool","i":"inc-20261021T013448-3b98","s":"incident","tool":"load_skill","d":false,"x":"data-loss-verification","r":null,"o":null}
+{"t":"01:35:02.589","ty":"agent_tool","i":"inc-20261021T013448-3b98","s":"incident","tool":"load_skill","d":false,"x":"hardening-after-incident","r":null,"o":null}
+{"t":"01:35:10.135","ty":"agent_tool","i":"inc-20261021T013448-3b98","s":"incident","tool":"write_file","d":false,"x":"/var/lib/raiden/incidents/inc-20261021T013448-3b98/notes.md","r":null,"o":null}
+{"t":"01:35:18.500","ty":"agent_tool","i":"inc-20261021T013448-3b98","s":"incident","tool":"bash","d":false,"x":"PGCONNECT_TIMEOUT=3 psql -X -At -d postgres -c \"SELECT pg_is_in_recovery(); SELECT name,setting FROM pg_settin","r":null,"o":null}
+{"t":"01:35:25.411","ty":"agent_tool","i":"inc-20261021T013448-3b98","s":"incident","tool":"pg_probe","d":false,"x":"","r":null,"o":null}
+{"t":"01:35:25.415","ty":"agent_tool","i":"inc-20261021T013448-3b98","s":"incident","tool":"bash","d":false,"x":"cp /var/lib/raiden/memory/lessons.md /var/lib/raiden/incidents/inc-20261021T013448-3b98/lessons.before.md; tai","r":null,"o":null}
+{"t":"01:35:49.418","ty":"agent_tool","i":"inc-20261021T013448-3b98","s":"incident","tool":"write_file","d":false,"x":"/var/lib/raiden/incidents/inc-20261021T013448-3b98/report.md","r":null,"o":null}
+{"t":"01:35:55.815","ty":"agent_tool","i":"inc-20261021T013448-3b98","s":"incident","tool":"edit_file","d":false,"x":"/var/lib/raiden/memory/lessons.md","r":null,"o":null}
+{"t":"01:36:00.783","ty":"agent_tool","i":"inc-20261021T013448-3b98","s":"incident","tool":"edit_file","d":false,"x":"/var/lib/raiden/incidents/inc-20261021T013448-3b98/notes.md","r":null,"o":null}
+{"t":"01:36:04.011","ty":"agent_tool","i":"inc-20261021T013448-3b98","s":"incident","tool":"finish","d":false,"x":"Existing protected-table guard rejected arena DROP in 3ms. Table and protections intact; all 74,948 acknowledg","r":null,"o":null}
+{"t":"01:36:04.012","ty":"incident_closed","i":"inc-20261021T013448-3b98","s":null,"tool":null,"d":0,"x":"Existing protected-table guard rejected arena DROP in 3ms. Table and protections intact; all 74,948 acknowledg","r":null,"o":"resolved"}
+{"t":"01:36:49.042","ty":"incident_verified_quiet","i":"inc-20261021T013448-3b98","s":null,"tool":null,"d":null,"x":"","r":null,"o":null}
+{"t":"01:36:49.045","ty":"evolution_started","i":"inc-20261021T013448-3b98","s":null,"tool":null,"d":null,"x":"","r":null,"o":null}
+{"t":"01:36:54.028","ty":"agent_tool","i":"inc-20261021T013448-3b98-evolve","s":"evolve","tool":"read_file","d":false,"x":"/var/lib/raiden/incidents/inc-20261021T013448-3b98/report.md","r":null,"o":null}
+{"t":"01:36:54.028","ty":"agent_tool","i":"inc-20261021T013448-3b98-evolve","s":"evolve","tool":"read_file","d":false,"x":"/var/lib/raiden/memory/lessons.md","r":null,"o":null}
+{"t":"01:36:54.029","ty":"agent_tool","i":"inc-20261021T013448-3b98-evolve","s":"evolve","tool":"read_file","d":false,"x":"/var/lib/raiden/memory/evolution.md","r":null,"o":null}
+{"t":"01:36:54.029","ty":"agent_tool","i":"inc-20261021T013448-3b98-evolve","s":"evolve","tool":"read_file","d":false,"x":"/var/lib/raiden/memory/protections.list","r":null,"o":null}
+{"t":"01:36:54.032","ty":"agent_tool","i":"inc-20261021T013448-3b98-evolve","s":"evolve","tool":"bash","d":false,"x":"tail -n 100 /var/lib/raiden/audit.jsonl","r":null,"o":null}
+{"t":"01:36:54.033","ty":"agent_tool","i":"inc-20261021T013448-3b98-evolve","s":"evolve","tool":"load_skill","d":false,"x":"hardening-after-incident","r":null,"o":null}
+{"t":"01:36:59.005","ty":"agent_tool","i":"inc-20261021T013448-3b98-evolve","s":"evolve","tool":"load_skill","d":false,"x":"preventive-protections","r":null,"o":null}
+{"t":"01:36:59.005","ty":"agent_tool","i":"inc-20261021T013448-3b98-evolve","s":"evolve","tool":"load_skill","d":false,"x":"pg-triage","r":null,"o":null}
+{"t":"01:36:59.005","ty":"agent_tool","i":"inc-20261021T013448-3b98-evolve","s":"evolve","tool":"load_skill","d":false,"x":"learned-table-drop-guard","r":null,"o":null}
+{"t":"01:36:59.028","ty":"agent_tool","i":"inc-20261021T013448-3b98-evolve","s":"evolve","tool":"pg_probe","d":false,"x":"","r":null,"o":null}
+{"t":"01:36:59.036","ty":"agent_tool","i":"inc-20261021T013448-3b98-evolve","s":"evolve","tool":"bash","d":false,"x":"ls /opt/raiden/checks.d /opt/raiden/.claude/skills; jq -c 'select(.incident==\"inc-20261021T013448-3b98\" or (.i","r":null,"o":null}
+{"t":"01:37:10.410","ty":"agent_tool","i":"inc-20261021T013448-3b98-evolve","s":"evolve","tool":"read_file","d":false,"x":"/opt/raiden/.claude/skills/preventive-protections/scripts/prove.sh","r":null,"o":null}
+{"t":"01:37:21.141","ty":"agent_tool","i":"inc-20261021T013448-3b98-evolve","s":"evolve","tool":"bash","d":false,"x":"jq -Rr 'fromjson? | select(.pid==55221)' /var/log/postgresql/raiden-20261021.json; PGCONNECT_TIMEOUT=3 psql -X","r":null,"o":null}
+{"t":"01:37:34.508","ty":"agent_tool","i":"inc-20261021T013448-3b98-evolve","s":"evolve","tool":"write_file","d":false,"x":"/var/lib/raiden/incidents/inc-20261021T013448-3b98/evolve/notes.md","r":null,"o":null}
+{"t":"01:37:51.452","ty":"agent_tool","i":"inc-20261021T013448-3b98-evolve","s":"evolve","tool":"bash","d":false,"x":"set -o pipefail; PGCONNECT_TIMEOUT=3 timeout 15 psql -X -d ledger -v VERBOSITY=verbose -c \"BEGIN; SET LOCAL lo","r":null,"o":null}
+{"t":"01:38:06.974","ty":"agent_tool","i":"inc-20261021T013448-3b98-evolve","s":"evolve","tool":"edit_file","d":false,"x":"/var/lib/raiden/memory/protections.list","r":null,"o":null}
+{"t":"01:38:36.997","ty":"agent_tool","i":"inc-20261021T013448-3b98-evolve","s":"evolve","tool":"write_file","d":false,"x":"/opt/raiden/.claude/skills/learned-table-drop-guard/scripts/ddl_attempts.py","r":null,"o":null}
+{"t":"01:38:44.010","ty":"agent_tool","i":"inc-20261021T013448-3b98-evolve","s":"evolve","tool":"write_file","d":false,"x":"/opt/raiden/checks.d/88-ddl-attempts.sh","r":null,"o":null}
+{"t":"01:38:50.201","ty":"agent_tool","i":"inc-20261021T013448-3b98-evolve","s":"evolve","tool":"bash","d":false,"x":"date -u +%FT%TZ; bash -n /opt/raiden/checks.d/88-ddl-attempts.sh; chmod 755 /opt/raiden/checks.d/88-ddl-attemp","r":null,"o":null}
+{"t":"01:39:03.815","ty":"agent_tool","i":"inc-20261021T013448-3b98-evolve","s":"evolve","tool":"edit_file","d":false,"x":"/opt/raiden/.claude/skills/learned-table-drop-guard/SKILL.md","r":null,"o":null}
+{"t":"01:39:11.635","ty":"agent_tool","i":"inc-20261021T013448-3b98-evolve","s":"evolve","tool":"load_skill","d":false,"x":"learned-table-drop-guard","r":null,"o":null}
+{"t":"01:39:14.741","ty":"agent_tool","i":"inc-20261021T013448-3b98-evolve","s":"evolve","tool":"bash","d":false,"x":"set -o pipefail; /opt/raiden/venv/bin/python -c 'import ast; from pathlib import Path; p=Path(\"/opt/raiden/.cl","r":null,"o":null}
+{"t":"01:39:21.330","ty":"agent_tool","i":"inc-20261021T013448-3b98-evolve","s":"evolve","tool":"edit_file","d":false,"x":"/opt/raiden/.claude/skills/learned-table-drop-guard/SKILL.md","r":null,"o":null}
+{"t":"01:39:29.122","ty":"agent_tool","i":"inc-20261021T013448-3b98-evolve","s":"evolve","tool":"bash","d":false,"x":"/opt/raiden/venv/bin/python -c 'from pathlib import Path; p=Path(\"/var/lib/raiden/incidents/inc-20261021T01344","r":null,"o":null}
+{"t":"01:39:31.432","ty":"agent_tool","i":"inc-20261021T013448-3b98-evolve","s":"evolve","tool":"pg_probe","d":false,"x":"","r":null,"o":null}
+{"t":"01:39:34.438","ty":"agent_tool","i":"inc-20261021T013448-3b98-evolve","s":"evolve","tool":"bash","d":false,"x":"date -u +%FT%TZ","r":null,"o":null}
+{"t":"01:39:38.449","ty":"agent_tool","i":"inc-20261021T013448-3b98-evolve","s":"evolve","tool":"edit_file","d":false,"x":"/var/lib/raiden/memory/protections.list","r":null,"o":null}
+{"t":"01:40:05.422","ty":"agent_tool","i":"inc-20261021T013448-3b98-evolve","s":"evolve","tool":"write_file","d":false,"x":"/var/lib/raiden/incidents/inc-20261021T013448-3b98/evolve/report.md","r":null,"o":null}
+{"t":"01:40:10.728","ty":"agent_tool","i":"inc-20261021T013448-3b98-evolve","s":"evolve","tool":"edit_file","d":false,"x":"/var/lib/raiden/memory/lessons.md","r":null,"o":null}
+{"t":"01:40:26.672","ty":"agent_tool","i":"inc-20261021T013448-3b98-evolve","s":"evolve","tool":"edit_file","d":false,"x":"/var/lib/raiden/memory/evolution.md","r":null,"o":null}
+{"t":"01:40:30.468","ty":"agent_tool","i":"inc-20261021T013448-3b98-evolve","s":"evolve","tool":"bash","d":false,"x":"tail -n 1 /var/lib/raiden/memory/evolution.md; bash /opt/raiden/checks.d/90-protections.sh; /opt/raiden/venv/b","r":null,"o":null}
+{"t":"01:40:34.715","ty":"agent_tool","i":"inc-20261021T013448-3b98-evolve","s":"evolve","tool":"finish","d":false,"x":"Preserved existing P3 and proved arena-owned scratch DROP rejected with 42501 and clean rollback. Added valida","r":null,"o":null}
+{"t":"01:40:34.820","ty":"evolution_done","i":"inc-20261021T013448-3b98","s":null,"tool":null,"d":null,"x":"Preserved existing P3 and proved arena-owned scratch DROP rejected with 42501 and clean rollback. Added valida","r":null,"o":null}
+{"t":"01:40:35.208","ty":"incident_settled","i":"inc-20261021T013448-3b98","s":null,"tool":null,"d":null,"x":"","r":null,"o":"resolved"}
+{"t":"01:43:27.053","ty":"incident_opened","i":"inc-20261021T014327-184f","s":null,"tool":null,"d":null,"x":"","r":null,"o":null}
+{"t":"01:43:27.053","ty":"incident_dispatched","i":"inc-20261021T014327-184f","s":null,"tool":null,"d":null,"x":"","r":null,"o":null}
+{"t":"01:43:29.006","ty":"agent_tool","i":"inc-20261021T014327-184f","s":"incident","tool":"load_skill","d":false,"x":"pg-triage","r":null,"o":null}
+{"t":"01:43:33.844","ty":"agent_tool","i":"inc-20261021T014327-184f","s":"incident","tool":"pg_probe","d":false,"x":"","r":null,"o":null}
+{"t":"01:43:33.844","ty":"agent_tool","i":"inc-20261021T014327-184f","s":"incident","tool":"load_skill","d":false,"x":"learned-lock-queue","r":null,"o":null}
+{"t":"01:43:34.272","ty":"agent_tool","i":"inc-20261021T014327-184f","s":"incident","tool":"bash","d":false,"x":"/opt/raiden/.claude/skills/pg-triage/scripts/snapshot.sh 10 | tee \"$RAIDEN_INCIDENT_DIR/snapshot.txt\"","r":null,"o":null}
+{"t":"01:43:34.273","ty":"agent_tool","i":"inc-20261021T014327-184f","s":"incident","tool":"read_file","d":false,"x":"/var/lib/raiden/memory/protections.list","r":null,"o":null}
+{"t":"01:43:34.273","ty":"agent_tool","i":"inc-20261021T014327-184f","s":"incident","tool":"read_file","d":false,"x":"/var/lib/raiden/memory/evolution.md","r":null,"o":null}
+{"t":"01:43:40.945","ty":"agent_tool","i":"inc-20261021T014327-184f","s":"incident","tool":"bash","d":false,"x":"PGCONNECT_TIMEOUT=3 psql -X -d ledger -c \"SELECT pid,usename,application_name,state,now()-state_change AS stat","r":null,"o":null}
+{"t":"01:43:40.945","ty":"agent_tool","i":"inc-20261021T014327-184f","s":"incident","tool":"load_skill","d":false,"x":"connection-storm","r":null,"o":null}
+{"t":"01:43:40.945","ty":"agent_tool","i":"inc-20261021T014327-184f","s":"incident","tool":"load_skill","d":false,"x":"hardening-after-incident","r":null,"o":null}
+{"t":"01:43:47.527","ty":"agent_tool","i":"inc-20261021T014327-184f","s":"incident","tool":"bash","d":false,"x":"jq -Rr 'fromjson? | select(.timestamp >= \"2026-10-21 01:43:00\" and .timestamp < \"2026-10-21 01:43:40\" and (.pi","r":null,"o":null}
+{"t":"01:43:59.789","ty":"agent_tool","i":"inc-20261021T014327-184f","s":"incident","tool":"write_file","d":false,"x":"$RAIDEN_INCIDENT_DIR/notes.md","r":null,"o":null}
+{"t":"01:44:01.777","ty":"agent_tool","i":"inc-20261021T014327-184f","s":"incident","tool":"load_skill","d":false,"x":"data-loss-verification","r":null,"o":null}
+{"t":"01:45:45.663","ty":"agent_tool","i":"inc-20261021T014327-184f","s":"incident","tool":"bash","d":false,"x":"sleep 95; bash /opt/raiden/checks.d/89-lock-queue.sh; bash /opt/raiden/checks.d/90-protections.sh; PGCONNECT_T","r":null,"o":null}
+{"t":"01:45:50.246","ty":"agent_tool","i":"inc-20261021T014327-184f","s":"incident","tool":"pg_probe","d":false,"x":"","r":null,"o":null}
+{"t":"01:45:50.252","ty":"agent_tool","i":"inc-20261021T014327-184f","s":"incident","tool":"bash","d":false,"x":"cp /var/lib/raiden/memory/lessons.md \"$RAIDEN_INCIDENT_DIR/lessons.before.md\"; tail -n 5 /var/lib/raiden/memor","r":null,"o":null}
+{"t":"01:46:20.011","ty":"agent_tool","i":"inc-20261021T014327-184f","s":"incident","tool":"write_file","d":false,"x":"$RAIDEN_INCIDENT_DIR/report.md","r":null,"o":null}
+{"t":"01:46:26.229","ty":"agent_tool","i":"inc-20261021T014327-184f","s":"incident","tool":"edit_file","d":false,"x":"/var/lib/raiden/memory/lessons.md","r":null,"o":null}
+{"t":"01:46:30.333","ty":"agent_tool","i":"inc-20261021T014327-184f","s":"incident","tool":"edit_file","d":false,"x":"$RAIDEN_INCIDENT_DIR/notes.md","r":null,"o":null}
+{"t":"01:46:33.716","ty":"agent_tool","i":"inc-20261021T014327-184f","s":"incident","tool":"finish","d":false,"x":"Existing 3s migrator lock timeout drained five production waiters; analyst client then disconnected, removing ","r":null,"o":null}
+{"t":"01:46:33.717","ty":"incident_closed","i":"inc-20261021T014327-184f","s":null,"tool":null,"d":0,"x":"Existing 3s migrator lock timeout drained five production waiters; analyst client then disconnected, removing ","r":null,"o":"resolved"}
+{"t":"01:47:18.751","ty":"incident_verified_quiet","i":"inc-20261021T014327-184f","s":null,"tool":null,"d":null,"x":"","r":null,"o":null}
+{"t":"01:47:18.754","ty":"evolution_started","i":"inc-20261021T014327-184f","s":null,"tool":null,"d":null,"x":"","r":null,"o":null}
+{"t":"01:47:21.147","ty":"agent_tool","i":"inc-20261021T014327-184f-evolve","s":"evolve","tool":"read_file","d":false,"x":"/var/lib/raiden/incidents/inc-20261021T014327-184f/report.md","r":null,"o":null}
+{"t":"01:47:25.316","ty":"agent_tool","i":"inc-20261021T014327-184f-evolve","s":"evolve","tool":"read_file","d":false,"x":"/var/lib/raiden/memory/lessons.md","r":null,"o":null}
+{"t":"01:47:25.316","ty":"agent_tool","i":"inc-20261021T014327-184f-evolve","s":"evolve","tool":"read_file","d":false,"x":"/var/lib/raiden/memory/evolution.md","r":null,"o":null}
+{"t":"01:47:25.316","ty":"agent_tool","i":"inc-20261021T014327-184f-evolve","s":"evolve","tool":"read_file","d":false,"x":"/var/lib/raiden/memory/protections.list","r":null,"o":null}
+{"t":"01:47:25.319","ty":"agent_tool","i":"inc-20261021T014327-184f-evolve","s":"evolve","tool":"bash","d":false,"x":"tail -n 70 /var/lib/raiden/audit.jsonl","r":null,"o":null}
+{"t":"01:47:25.320","ty":"agent_tool","i":"inc-20261021T014327-184f-evolve","s":"evolve","tool":"load_skill","d":false,"x":"hardening-after-incident","r":null,"o":null}
+{"t":"01:47:25.320","ty":"agent_tool","i":"inc-20261021T014327-184f-evolve","s":"evolve","tool":"load_skill","d":false,"x":"pg-triage","r":null,"o":null}
+{"t":"01:47:31.413","ty":"agent_tool","i":"inc-20261021T014327-184f-evolve","s":"evolve","tool":"load_skill","d":false,"x":"preventive-protections","r":null,"o":null}
+{"t":"01:47:31.413","ty":"agent_tool","i":"inc-20261021T014327-184f-evolve","s":"evolve","tool":"load_skill","d":false,"x":"learned-lock-queue","r":null,"o":null}
+{"t":"01:47:31.443","ty":"agent_tool","i":"inc-20261021T014327-184f-evolve","s":"evolve","tool":"pg_probe","d":false,"x":"","r":null,"o":null}
+{"t":"01:47:31.443","ty":"agent_tool","i":"inc-20261021T014327-184f-evolve","s":"evolve","tool":"read_file","d":false,"x":"/opt/raiden/checks.d/89-lock-queue.sh","r":null,"o":null}
+{"t":"01:47:31.452","ty":"agent_tool","i":"inc-20261021T014327-184f-evolve","s":"evolve","tool":"bash","d":false,"x":"ls /opt/raiden/checks.d /opt/raiden/.claude/skills; jq -c 'select(.incident==\"inc-20261021T014327-184f\")' /var","r":null,"o":null}
+{"t":"01:47:41.597","ty":"agent_tool","i":"inc-20261021T014327-184f-evolve","s":"evolve","tool":"read_file","d":false,"x":"/var/lib/raiden/work/prove_lock_queue_defaults.py","r":null,"o":null}
+{"t":"01:47:41.597","ty":"agent_tool","i":"inc-20261021T014327-184f-evolve","s":"evolve","tool":"read_file","d":false,"x":"/opt/raiden/.claude/skills/preventive-protections/scripts/prove_lock_timeout.sh","r":null,"o":null}
+{"t":"01:47:41.597","ty":"agent_tool","i":"inc-20261021T014327-184f-evolve","s":"evolve","tool":"read_file","d":false,"x":"/opt/raiden/.claude/skills/learned-table-drop-guard/scripts/ddl_attempts.py","r":null,"o":null}
+{"t":"01:47:41.598","ty":"agent_tool","i":"inc-20261021T014327-184f-evolve","s":"evolve","tool":"read_file","d":false,"x":"/var/lib/raiden/incidents/inc-20261021T014327-184f/notes.md","r":null,"o":null}
+{"t":"01:47:50.387","ty":"agent_tool","i":"inc-20261021T014327-184f-evolve","s":"evolve","tool":"bash","d":false,"x":"PGCONNECT_TIMEOUT=3 psql -X -d ledger -c \"SELECT rolname,rolsuper,rolcanlogin,rolconfig FROM pg_roles WHERE ro","r":null,"o":null}
+{"t":"01:48:05.244","ty":"agent_tool","i":"inc-20261021T014327-184f-evolve","s":"evolve","tool":"write_file","d":false,"x":"/var/lib/raiden/incidents/inc-20261021T014327-184f/evolve/notes.md","r":null,"o":null}
+{"t":"01:48:15.260","ty":"agent_tool","i":"inc-20261021T014327-184f-evolve","s":"evolve","tool":"bash","d":false,"x":"mkdir -p /var/lib/raiden/incidents/inc-20261021T014327-184f/evolve/before /var/lib/raiden/work/p5-reproof-184f","r":null,"o":null}
+{"t":"01:48:19.833","ty":"agent_tool","i":"inc-20261021T014327-184f-evolve","s":"evolve","tool":"bash","d":false,"x":"PGCONNECT_TIMEOUT=3 psql -X -h /var/lib/raiden/work/p5-reproof-184f/socket -p 5548 -d postgres -v ON_ERROR_STO","r":null,"o":null}
+{"t":"01:48:42.475","ty":"agent_tool","i":"inc-20261021T014327-184f-evolve","s":"evolve","tool":"bash","d":false,"x":"PGCONNECT_TIMEOUT=3 psql -X -h /var/lib/raiden/work/p5-reproof-184f/socket -p 5548 -d postgres -v ON_ERROR_STO","r":null,"o":null}
+{"t":"01:48:52.993","ty":"agent_tool","i":"inc-20261021T014327-184f-evolve","s":"evolve","tool":"bash","d":false,"x":"/usr/lib/postgresql/18/bin/pg_ctl -D /var/lib/raiden/work/p5-reproof-184f/data -m fast -w stop; bash /opt/raid","r":null,"o":null}
+{"t":"01:48:58.001","ty":"agent_tool","i":"inc-20261021T014327-184f-evolve","s":"evolve","tool":"edit_file","d":false,"x":"/var/lib/raiden/memory/protections.list","r":null,"o":null}
+{"t":"01:49:17.346","ty":"agent_tool","i":"inc-20261021T014327-184f-evolve","s":"evolve","tool":"write_file","d":false,"x":"/opt/raiden/.claude/skills/learned-lock-queue/scripts/lock_wait_history.py","r":null,"o":null}
+{"t":"01:49:24.735","ty":"agent_tool","i":"inc-20261021T014327-184f-evolve","s":"evolve","tool":"write_file","d":false,"x":"/opt/raiden/checks.d/89-lock-wait-history.sh","r":null,"o":null}
+{"t":"01:49:34.419","ty":"agent_tool","i":"inc-20261021T014327-184f-evolve","s":"evolve","tool":"edit_file","d":false,"x":"/opt/raiden/.claude/skills/learned-lock-queue/SKILL.md","r":null,"o":null}
+{"t":"01:49:40.558","ty":"agent_tool","i":"inc-20261021T014327-184f-evolve","s":"evolve","tool":"bash","d":false,"x":"bash -n /opt/raiden/checks.d/89-lock-wait-history.sh; chmod 755 /opt/raiden/checks.d/89-lock-wait-history.sh /","r":null,"o":null}
+{"t":"01:49:50.239","ty":"agent_tool","i":"inc-20261021T014327-184f-evolve","s":"evolve","tool":"load_skill","d":false,"x":"learned-lock-queue","r":null,"o":null}
+{"t":"01:49:50.583","ty":"agent_tool","i":"inc-20261021T014327-184f-evolve","s":"evolve","tool":"bash","d":false,"x":"/usr/bin/python3 -c 'import ast; from pathlib import Path; p=Path(\"/opt/raiden/.claude/skills/learned-lock-que","r":null,"o":null}
+{"t":"01:49:54.077","ty":"agent_tool","i":"inc-20261021T014327-184f-evolve","s":"evolve","tool":"bash","d":false,"x":"PGCONNECT_TIMEOUT=3 psql -X -d ledger -c \"SELECT pid,usename,state,now()-state_change AS state_age,wait_event_","r":null,"o":null}
+{"t":"01:50:11.064","ty":"agent_tool","i":"inc-20261021T014327-184f-evolve","s":"evolve","tool":"edit_file","d":false,"x":"/opt/raiden/.claude/skills/learned-lock-queue/SKILL.md","r":null,"o":null}
+{"t":"01:50:13.433","ty":"agent_tool","i":"inc-20261021T014327-184f-evolve","s":"evolve","tool":"pg_probe","d":false,"x":"","r":null,"o":null}
+{"t":"01:50:22.353","ty":"agent_tool","i":"inc-20261021T014327-184f-evolve","s":"evolve","tool":"edit_file","d":false,"x":"/var/lib/raiden/incidents/inc-20261021T014327-184f/evolve/notes.md","r":null,"o":null}
+{"t":"01:50:55.933","ty":"agent_tool","i":"inc-20261021T014327-184f-evolve","s":"evolve","tool":"write_file","d":false,"x":"/var/lib/raiden/incidents/inc-20261021T014327-184f/evolve/report.md","r":null,"o":null}
+{"t":"01:50:58.843","ty":"agent_tool","i":"inc-20261021T014327-184f-evolve","s":"evolve","tool":"edit_file","d":false,"x":"/var/lib/raiden/memory/lessons.md","r":null,"o":null}
+{"t":"01:51:04.012","ty":"agent_tool","i":"inc-20261021T014327-184f-evolve","s":"evolve","tool":"edit_file","d":false,"x":"/var/lib/raiden/memory/lessons.md","r":null,"o":null}
+{"t":"01:51:19.148","ty":"agent_tool","i":"inc-20261021T014327-184f-evolve","s":"evolve","tool":"edit_file","d":false,"x":"/var/lib/raiden/memory/evolution.md","r":null,"o":null}
+{"t":"01:51:24.885","ty":"agent_tool","i":"inc-20261021T014327-184f-evolve","s":"evolve","tool":"bash","d":false,"x":"/usr/bin/python3 -c 'from pathlib import Path; p=Path(\"/opt/raiden/.claude/skills/learned-lock-queue/SKILL.md\"","r":null,"o":null}
+{"t":"01:51:30.241","ty":"agent_tool","i":"inc-20261021T014327-184f-evolve","s":"evolve","tool":"finish","d":false,"x":"Preserved existing P5 and re-proved exact waiting LOCK rejection in 3.000s plus 15s idle-transaction expiry on","r":null,"o":null}
+{"t":"01:51:30.340","ty":"evolution_done","i":"inc-20261021T014327-184f","s":null,"tool":null,"d":null,"x":"Preserved existing P5 and re-proved exact waiting LOCK rejection in 3.000s plus 15s idle-transaction expiry on","r":null,"o":null}
+{"t":"01:51:30.830","ty":"incident_settled","i":"inc-20261021T014327-184f","s":null,"tool":null,"d":null,"x":"","r":null,"o":"resolved"}
+{"t":"01:51:39.796","ty":"patrol_run","i":null,"s":null,"tool":null,"d":null,"x":"","r":null,"o":null}
+{"t":"01:52:42.634","ty":"incident_opened","i":"inc-20261021T015242-50c1","s":null,"tool":null,"d":null,"x":"","r":null,"o":null}
+{"t":"01:52:42.634","ty":"incident_dispatched","i":"inc-20261021T015242-50c1","s":null,"tool":null,"d":null,"x":"","r":null,"o":null}
+{"t":"01:52:44.505","ty":"agent_tool","i":"inc-20261021T015242-50c1","s":"incident","tool":"load_skill","d":false,"x":"pg-triage","r":null,"o":null}
+{"t":"01:52:47.877","ty":"agent_tool","i":"inc-20261021T015242-50c1","s":"incident","tool":"pg_probe","d":false,"x":"","r":null,"o":null}
+{"t":"01:52:48.325","ty":"agent_tool","i":"inc-20261021T015242-50c1","s":"incident","tool":"bash","d":false,"x":"/opt/raiden/.claude/skills/pg-triage/scripts/snapshot.sh 10 | tee \"$RAIDEN_INCIDENT_DIR/snapshot-initial.txt\"","r":null,"o":null}
+{"t":"01:52:48.326","ty":"agent_tool","i":"inc-20261021T015242-50c1","s":"incident","tool":"read_file","d":false,"x":"/var/lib/raiden/memory/protections.list","r":null,"o":null}
+{"t":"01:52:48.326","ty":"agent_tool","i":"inc-20261021T015242-50c1","s":"incident","tool":"read_file","d":false,"x":"/var/lib/raiden/memory/evolution.md","r":null,"o":null}
+{"t":"01:52:55.778","ty":"agent_tool","i":"inc-20261021T015242-50c1","s":"incident","tool":"load_skill","d":false,"x":"fortify-database","r":null,"o":null}
+{"t":"01:52:55.778","ty":"agent_tool","i":"inc-20261021T015242-50c1","s":"incident","tool":"load_skill","d":false,"x":"crash-loop-rca","r":null,"o":null}
+{"t":"01:52:55.778","ty":"agent_tool","i":"inc-20261021T015242-50c1","s":"incident","tool":"load_skill","d":false,"x":"hardening-after-incident","r":null,"o":null}
+{"t":"01:52:55.957","ty":"agent_tool","i":"inc-20261021T015242-50c1","s":"incident","tool":"bash","d":false,"x":"jq -Rr 'fromjson? | select(.timestamp >= \"2026-10-21 01:52:00\" and (.pid == 63242 or (.message|test(\"ALTER SYS","r":null,"o":null}
+{"t":"01:53:06.892","ty":"agent_tool","i":"inc-20261021T015242-50c1","s":"incident","tool":"write_file","d":false,"x":"$RAIDEN_INCIDENT_DIR/notes.md","r":null,"o":null}
+{"t":"01:53:18.218","ty":"agent_tool","i":"inc-20261021T015242-50c1","s":"incident","tool":"bash","d":false,"x":"/opt/raiden/venv/bin/python /opt/arena/ledger.py reconcile --json | tee \"$RAIDEN_INCIDENT_DIR/reconcile.json\";","r":null,"o":null}
+{"t":"01:54:23.288","ty":"agent_tool","i":"inc-20261021T015242-50c1","s":"incident","tool":"bash","d":false,"x":"sleep 65; jq -Rr 'fromjson? | select(.timestamp >= \"2026-10-21 01:52:35\" and (.message|test(\"ALTER SYSTEM|pg_c","r":null,"o":null}
+{"t":"01:54:23.293","ty":"agent_tool","i":"inc-20261021T015242-50c1","s":"incident","tool":"bash","d":false,"x":"grep -n -iE 'ALTER SYSTEM|pg_crash' /var/lib/raiden/memory/lessons.md; wc -l /var/lib/raiden/memory/lessons.md","r":null,"o":null}
+{"t":"01:54:26.823","ty":"agent_tool","i":"inc-20261021T015242-50c1","s":"incident","tool":"pg_probe","d":false,"x":"","r":null,"o":null}
+{"t":"01:54:26.823","ty":"agent_tool","i":"inc-20261021T015242-50c1","s":"incident","tool":"read_file","d":false,"x":"/var/lib/raiden/memory/lessons.md","r":null,"o":null}
+{"t":"01:54:26.826","ty":"agent_tool","i":"inc-20261021T015242-50c1","s":"incident","tool":"bash","d":false,"x":"cp -p /var/lib/raiden/memory/lessons.md \"$RAIDEN_INCIDENT_DIR/lessons.before.md\"","r":null,"o":null}
+{"t":"01:54:33.463","ty":"agent_tool","i":"inc-20261021T015242-50c1","s":"incident","tool":"edit_file","d":false,"x":"/var/lib/raiden/memory/lessons.md","r":null,"o":null}
+{"t":"01:55:04.978","ty":"agent_tool","i":"inc-20261021T015242-50c1","s":"incident","tool":"write_file","d":false,"x":"$RAIDEN_INCIDENT_DIR/report.md","r":null,"o":null}
+{"t":"01:55:10.450","ty":"agent_tool","i":"inc-20261021T015242-50c1","s":"incident","tool":"edit_file","d":false,"x":"$RAIDEN_INCIDENT_DIR/notes.md","r":null,"o":null}
+{"t":"01:55:13.240","ty":"agent_tool","i":"inc-20261021T015242-50c1","s":"incident","tool":"finish","d":false,"x":"Existing ALTER SYSTEM guard rejected attempted pg_crash preload change; live and planned configuration intact,","r":null,"o":null}
+{"t":"01:55:13.240","ty":"incident_closed","i":"inc-20261021T015242-50c1","s":null,"tool":null,"d":0,"x":"Existing ALTER SYSTEM guard rejected attempted pg_crash preload change; live and planned configuration intact,","r":null,"o":"resolved"}
+{"t":"01:55:58.281","ty":"incident_verified_quiet","i":"inc-20261021T015242-50c1","s":null,"tool":null,"d":null,"x":"","r":null,"o":null}
+{"t":"01:55:58.800","ty":"incident_settled","i":"inc-20261021T015242-50c1","s":null,"tool":null,"d":null,"x":"","r":null,"o":"resolved"}
+{"t":"01:57:13.884","ty":"crash_recovery_seen","i":null,"s":null,"tool":null,"d":null,"x":"","r":null,"o":null}
+{"t":"01:57:19.927","ty":"incident_opened","i":"inc-20261021T015719-597d","s":null,"tool":null,"d":null,"x":"","r":null,"o":null}
+{"t":"01:57:19.927","ty":"incident_dispatched","i":"inc-20261021T015719-597d","s":null,"tool":null,"d":null,"x":"","r":null,"o":null}
+{"t":"01:57:21.385","ty":"agent_tool","i":"inc-20261021T015719-597d","s":"incident","tool":"load_skill","d":false,"x":"pg-triage","r":null,"o":null}
+{"t":"01:57:22.409","ty":"crash_recovery_seen","i":null,"s":null,"tool":null,"d":null,"x":"","r":null,"o":null}
+{"t":"01:57:25.224","ty":"agent_tool","i":"inc-20261021T015719-597d","s":"incident","tool":"pg_probe","d":false,"x":"","r":null,"o":null}
+{"t":"01:57:25.224","ty":"agent_tool","i":"inc-20261021T015719-597d","s":"incident","tool":"load_skill","d":false,"x":"crash-loop-rca","r":null,"o":null}
+{"t":"01:57:25.657","ty":"agent_tool","i":"inc-20261021T015719-597d","s":"incident","tool":"bash","d":false,"x":"/opt/raiden/.claude/skills/pg-triage/scripts/snapshot.sh 15 | tee \"$RAIDEN_INCIDENT_DIR/snapshot.txt\"","r":null,"o":null}
+{"t":"01:57:25.658","ty":"agent_tool","i":"inc-20261021T015719-597d","s":"incident","tool":"read_file","d":false,"x":"/var/lib/raiden/memory/protections.list","r":null,"o":null}
+{"t":"01:57:25.658","ty":"agent_tool","i":"inc-20261021T015719-597d","s":"incident","tool":"read_file","d":false,"x":"/var/lib/raiden/memory/evolution.md","r":null,"o":null}
+{"t":"01:57:29.513","ty":"agent_tool","i":"inc-20261021T015719-597d","s":"incident","tool":"bash","d":false,"x":"cat /etc/postgresql/18/main/conf.d/50-experiment.conf /etc/postgresql/18/main/conf.d/98-raiden-baseline.conf; ","r":null,"o":null}
+{"t":"01:57:30.430","ty":"crash_recovery_seen","i":null,"s":null,"tool":null,"d":null,"x":"","r":null,"o":null}
+{"t":"01:57:36.429","ty":"agent_tool","i":"inc-20261021T015719-597d","s":"incident","tool":"write_file","d":false,"x":"$RAIDEN_INCIDENT_DIR/notes.md","r":null,"o":null}
+{"t":"01:57:38.952","ty":"crash_recovery_seen","i":null,"s":null,"tool":null,"d":null,"x":"","r":null,"o":null}
+{"t":"01:57:40.743","ty":"agent_tool","i":"inc-20261021T015719-597d","s":"incident","tool":"bash","d":false,"x":"cp -p /etc/postgresql/18/main/conf.d/50-experiment.conf \"$RAIDEN_INCIDENT_DIR/50-experiment.conf.before\"; sudo","r":null,"o":null}
+{"t":"01:57:47.035","ty":"agent_tool","i":"inc-20261021T015719-597d","s":"incident","tool":"bash","d":false,"x":"timeout 90 bash -c 'until pg_isready -q -t 2; do sleep 1; done'; sudo -n systemctl restart postgresql@18-main;","r":null,"o":null}
+{"t":"01:57:53.610","ty":"agent_tool","i":"inc-20261021T015719-597d","s":"incident","tool":"pg_probe","d":false,"x":"","r":null,"o":null}
+{"t":"01:57:53.610","ty":"agent_tool","i":"inc-20261021T015719-597d","s":"incident","tool":"load_skill","d":false,"x":"data-loss-verification","r":null,"o":null}
+{"t":"01:57:53.610","ty":"agent_tool","i":"inc-20261021T015719-597d","s":"incident","tool":"load_skill","d":false,"x":"hardening-after-incident","r":null,"o":null}
+{"t":"01:57:58.132","ty":"agent_tool","i":"inc-20261021T015719-597d","s":"incident","tool":"bash","d":false,"x":"PGCONNECT_TIMEOUT=3 psql -X -At -d postgres -c \"SELECT name,setting,pending_restart FROM pg_settings WHERE nam","r":null,"o":null}
+{"t":"01:59:07.882","ty":"agent_tool","i":"inc-20261021T015719-597d","s":"incident","tool":"bash","d":false,"x":"T0=\"$(date -u '+%F %T')\"; sleep 60; jq -Rr --arg s \"$T0\" 'fromjson? | select(.timestamp >= $s and (.message|te","r":null,"o":null}
+{"t":"01:59:13.547","ty":"agent_tool","i":"inc-20261021T015719-597d","s":"incident","tool":"pg_probe","d":false,"x":"","r":null,"o":null}
+{"t":"01:59:13.611","ty":"agent_tool","i":"inc-20261021T015719-597d","s":"incident","tool":"bash","d":false,"x":"jq -Rr 'fromjson? | select(.timestamp >= \"2026-10-21 01:57:04\" and .timestamp <= \"2026-10-21 01:57:48\" and (.m","r":null,"o":null}
+{"t":"01:59:24.593","ty":"agent_tool","i":"inc-20261021T015719-597d","s":"incident","tool":"write_file","d":false,"x":"$RAIDEN_INCIDENT_DIR/notes.md","r":null,"o":null}
+{"t":"01:59:52.432","ty":"agent_tool","i":"inc-20261021T015719-597d","s":"incident","tool":"write_file","d":false,"x":"$RAIDEN_INCIDENT_DIR/report.md","r":null,"o":null}
+{"t":"01:59:55.544","ty":"agent_tool","i":"inc-20261021T015719-597d","s":"incident","tool":"read_file","d":false,"x":"/var/lib/raiden/memory/lessons.md","r":null,"o":null}
+{"t":"01:59:58.458","ty":"agent_tool","i":"inc-20261021T015719-597d","s":"incident","tool":"bash","d":false,"x":"cp -p /var/lib/raiden/memory/lessons.md \"$RAIDEN_INCIDENT_DIR/lessons.md.before\"","r":null,"o":null}
+{"t":"02:00:05.151","ty":"agent_tool","i":"inc-20261021T015719-597d","s":"incident","tool":"edit_file","d":false,"x":"/var/lib/raiden/memory/lessons.md","r":null,"o":null}
+{"t":"02:00:07.392","ty":"agent_tool","i":"inc-20261021T015719-597d","s":"incident","tool":"finish","d":false,"x":"Removed pg_crash from its conf.d source with one readiness-gated restart. Verified 60 seconds without new cras","r":null,"o":null}
+{"t":"02:00:07.392","ty":"incident_closed","i":"inc-20261021T015719-597d","s":null,"tool":null,"d":0,"x":"Removed pg_crash from its conf.d source with one readiness-gated restart. Verified 60 seconds without new cras","r":null,"o":"resolved"}
+{"t":"02:00:52.426","ty":"incident_verified_quiet","i":"inc-20261021T015719-597d","s":null,"tool":null,"d":null,"x":"","r":null,"o":null}
+{"t":"02:00:52.428","ty":"evolution_started","i":"inc-20261021T015719-597d","s":null,"tool":null,"d":null,"x":"","r":null,"o":null}
+{"t":"02:00:54.995","ty":"agent_tool","i":"inc-20261021T015719-597d-evolve","s":"evolve","tool":"load_skill","d":false,"x":"pg-triage","r":null,"o":null}
+{"t":"02:01:00.214","ty":"agent_tool","i":"inc-20261021T015719-597d-evolve","s":"evolve","tool":"read_file","d":false,"x":"/var/lib/raiden/incidents/inc-20261021T015719-597d/report.md","r":null,"o":null}
+{"t":"02:01:00.214","ty":"agent_tool","i":"inc-20261021T015719-597d-evolve","s":"evolve","tool":"read_file","d":false,"x":"/var/lib/raiden/memory/lessons.md","r":null,"o":null}
+{"t":"02:01:00.215","ty":"agent_tool","i":"inc-20261021T015719-597d-evolve","s":"evolve","tool":"read_file","d":false,"x":"/var/lib/raiden/memory/evolution.md","r":null,"o":null}
+{"t":"02:01:00.215","ty":"agent_tool","i":"inc-20261021T015719-597d-evolve","s":"evolve","tool":"read_file","d":false,"x":"/var/lib/raiden/memory/protections.list","r":null,"o":null}
+{"t":"02:01:00.215","ty":"agent_tool","i":"inc-20261021T015719-597d-evolve","s":"evolve","tool":"load_skill","d":false,"x":"hardening-after-incident","r":null,"o":null}
+{"t":"02:01:00.215","ty":"agent_tool","i":"inc-20261021T015719-597d-evolve","s":"evolve","tool":"load_skill","d":false,"x":"preventive-protections","r":null,"o":null}
+{"t":"02:01:00.218","ty":"agent_tool","i":"inc-20261021T015719-597d-evolve","s":"evolve","tool":"bash","d":false,"x":"tail -n 65 /var/lib/raiden/audit.jsonl","r":null,"o":null}
+{"t":"02:01:05.605","ty":"agent_tool","i":"inc-20261021T015719-597d-evolve","s":"evolve","tool":"pg_probe","d":false,"x":"","r":null,"o":null}
+{"t":"02:01:05.605","ty":"agent_tool","i":"inc-20261021T015719-597d-evolve","s":"evolve","tool":"read_file","d":false,"x":"/opt/raiden/.claude/skills/preventive-protections/scripts/prove_pin_preload.sh","r":null,"o":null}
+{"t":"02:01:05.606","ty":"agent_tool","i":"inc-20261021T015719-597d-evolve","s":"evolve","tool":"read_file","d":false,"x":"/opt/raiden/checks.d/90-protections.sh","r":null,"o":null}
+{"t":"02:01:05.623","ty":"agent_tool","i":"inc-20261021T015719-597d-evolve","s":"evolve","tool":"bash","d":false,"x":"ls /opt/raiden/checks.d /opt/raiden/.claude/skills; cat /etc/postgresql/18/main/conf.d/98-raiden-baseline.conf","r":null,"o":null}
+{"t":"02:01:22.522","ty":"agent_tool","i":"inc-20261021T015719-597d-evolve","s":"evolve","tool":"write_file","d":false,"x":"/var/lib/raiden/incidents/inc-20261021T015719-597d/evolve/notes.md","r":null,"o":null}
+{"t":"02:01:29.075","ty":"agent_tool","i":"inc-20261021T015719-597d-evolve","s":"evolve","tool":"bash","d":false,"x":"mkdir -p /var/lib/raiden/incidents/inc-20261021T015719-597d/evolve/before; cp -a /etc/postgresql/18/main /var/","r":null,"o":null}
+{"t":"02:01:29.555","ty":"patrol_triggered","i":null,"s":null,"tool":null,"d":null,"x":"","r":null,"o":null}
+{"t":"02:01:33.047","ty":"patrol_run","i":null,"s":null,"tool":null,"d":null,"x":"","r":null,"o":null}
+{"t":"02:01:40.156","ty":"agent_tool","i":"inc-20261021T015719-597d-evolve","s":"evolve","tool":"write_file","d":false,"x":"/var/lib/raiden/work/prove_pin_preload_597d.sh","r":null,"o":null}
+{"t":"02:01:43.168","ty":"agent_tool","i":"inc-20261021T015719-597d-evolve","s":"evolve","tool":"bash","d":false,"x":"bash -n /var/lib/raiden/work/prove_pin_preload_597d.sh; time bash /var/lib/raiden/work/prove_pin_preload_597d.","r":null,"o":null}
+{"t":"02:01:46.304","ty":"agent_tool","i":"inc-20261021T015719-597d-evolve","s":"evolve","tool":"edit_file","d":false,"x":"/var/lib/raiden/work/prove_pin_preload_597d.sh","r":null,"o":null}
+{"t":"02:01:49.829","ty":"agent_tool","i":"inc-20261021T015719-597d-evolve","s":"evolve","tool":"bash","d":false,"x":"set -o pipefail; bash -n /var/lib/raiden/work/prove_pin_preload_597d.sh; time bash /var/lib/raiden/work/prove_","r":null,"o":null}
+{"t":"02:01:56.406","ty":"agent_tool","i":"inc-20261021T015719-597d-evolve","s":"evolve","tool":"bash","d":false,"x":"sudo -n -u postgres grep '/usr/lib/postgresql/18/lib/.*\\.so' /proc/$(cat /run/postgresql/18-main.pid)/maps | a","r":null,"o":null}
+{"t":"02:02:18.051","ty":"agent_tool","i":"inc-20261021T015719-597d-evolve","s":"evolve","tool":"write_file","d":false,"x":"/opt/raiden/checks.d/89-preload-guard.sh","r":null,"o":null}
+{"t":"02:02:42.414","ty":"agent_tool","i":"inc-20261021T015719-597d-evolve","s":"evolve","tool":"write_file","d":false,"x":"/opt/raiden/.claude/skills/learned-preload-guard/SKILL.md","r":null,"o":null}
+{"t":"02:02:51.181","ty":"agent_tool","i":"inc-20261021T015719-597d-evolve","s":"evolve","tool":"bash","d":false,"x":"sha256sum /etc/postgresql/18/main/conf.d/99-raiden-pin-preload.conf > /var/lib/raiden/memory/preload-guard.bas","r":null,"o":null}
+{"t":"02:02:58.116","ty":"agent_tool","i":"inc-20261021T015719-597d-evolve","s":"evolve","tool":"load_skill","d":false,"x":"learned-preload-guard","r":null,"o":null}
+{"t":"02:03:03.083","ty":"agent_tool","i":"inc-20261021T015719-597d-evolve","s":"evolve","tool":"bash","d":false,"x":"set -o pipefail; /opt/raiden/.claude/skills/health-patrol/scripts/run_checks.sh | tee /var/lib/raiden/incident","r":null,"o":null}
+{"t":"02:03:09.345","ty":"agent_tool","i":"inc-20261021T015719-597d-evolve","s":"evolve","tool":"bash","d":false,"x":"jq -Rr 'fromjson? | select(.timestamp >= \"2026-10-21 02:00:54\" and (.message|test(\"terminated by signal|exited","r":null,"o":null}
+{"t":"02:03:18.829","ty":"agent_tool","i":"inc-20261021T015719-597d-evolve","s":"evolve","tool":"edit_file","d":false,"x":"/var/lib/raiden/incidents/inc-20261021T015719-597d/evolve/notes.md","r":null,"o":null}
+{"t":"02:03:23.116","ty":"agent_tool","i":"inc-20261021T015719-597d-evolve","s":"evolve","tool":"pg_probe","d":false,"x":"","r":null,"o":null}
+{"t":"02:03:50.748","ty":"agent_tool","i":"inc-20261021T015719-597d-evolve","s":"evolve","tool":"write_file","d":false,"x":"/var/lib/raiden/incidents/inc-20261021T015719-597d/evolve/report.md","r":null,"o":null}
+{"t":"02:03:57.417","ty":"agent_tool","i":"inc-20261021T015719-597d-evolve","s":"evolve","tool":"edit_file","d":false,"x":"/var/lib/raiden/memory/lessons.md","r":null,"o":null}
+{"t":"02:04:11.009","ty":"agent_tool","i":"inc-20261021T015719-597d-evolve","s":"evolve","tool":"edit_file","d":false,"x":"/var/lib/raiden/memory/evolution.md","r":null,"o":null}
+{"t":"02:04:14.761","ty":"agent_tool","i":"inc-20261021T015719-597d-evolve","s":"evolve","tool":"bash","d":false,"x":"/usr/bin/python3 -c 'from pathlib import Path; s=Path(\"/var/lib/raiden/memory/evolution.md\").read_text().split","r":null,"o":null}
+{"t":"02:04:19.356","ty":"agent_tool","i":"inc-20261021T015719-597d-evolve","s":"evolve","tool":"finish","d":false,"x":"Pinned approved preload so the exact pg_crash conf.d experiment loses; retained-copy attack and positive-contr","r":null,"o":null}
+{"t":"02:04:19.461","ty":"evolution_done","i":"inc-20261021T015719-597d","s":null,"tool":null,"d":null,"x":"Pinned approved preload so the exact pg_crash conf.d experiment loses; retained-copy attack and positive-contr","r":null,"o":null}
+{"t":"02:04:20.101","ty":"incident_settled","i":"inc-20261021T015719-597d","s":null,"tool":null,"d":null,"x":"","r":null,"o":"resolved"}

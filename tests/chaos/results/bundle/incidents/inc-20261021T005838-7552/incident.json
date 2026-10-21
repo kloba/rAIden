@@ -1,0 +1,34 @@
+{
+  "id": "inc-20261021T005838-7552",
+  "opened_at": "2026-10-21T00:58:22.178Z",
+  "dispatched_at": "2026-10-21T00:58:38.286Z",
+  "reason": "critical event: missing_relation x287, destructive_ddl x1",
+  "signatures": [
+    "destructive_ddl:LOG:statement: DROP TABLE public.entries",
+    "missing_relation:42P01:relation \"entries\" does not exist"
+  ],
+  "kinds": {
+    "destructive_ddl": 1,
+    "missing_relation": 287
+  },
+  "events_count": 288,
+  "critical": true,
+  "recurrence_of": null,
+  "model": "gpt-6.1-sol",
+  "finished_at": "2026-10-21T01:01:43.753Z",
+  "outcome": "resolved",
+  "summary": "Recovered public.entries via exclusive-XID PITR side clone and atomic table-only restore. Verified all 20,734 acknowledged commits present, zero lost/corrupt/unreadable rows, clean amcheck and healthy streaming replica. No primary restart or durability/protection weakening; destructive-DDL prevention deferred to evolve.",
+  "session_id": "inc-20261021T005838-7552",
+  "num_turns": 17,
+  "duration_ms": 185460,
+  "total_cost_usd": 0.0,
+  "tool_calls": 24,
+  "denied_calls": 0,
+  "report_path": "/var/lib/raiden/incidents/inc-20261021T005838-7552/report.md",
+  "error": null,
+  "usage": {
+    "prompt_tokens": 323397,
+    "completion_tokens": 4457,
+    "cached_tokens": 298156
+  }
+}
