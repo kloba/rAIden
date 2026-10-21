@@ -9,8 +9,7 @@ investigates it like a senior DBA, fixes it behind guardrails and proves the fix
 want a person to decide.
 
 [Quick start](#quick-start) · [Tour](#a-tour) · [Any PostgreSQL](#any-postgresql-anywhere) · [How it works](#how-it-works) ·
-[Fabric's Database Hub](#next-to-fabrics-database-hub) · [Deploy](#deploy-it) · [Security](#security) · [Tested on real servers](#tested-on-real-servers) ·
-[Production readiness](docs/production-readiness.md)
+[Deploy](#deploy-it) · [Security](#security) · [Tested on real servers](#tested-on-real-servers) · [Production readiness](docs/production-readiness.md)
 
 </div>
 
@@ -134,30 +133,12 @@ Session actions (cancel, terminate, role limits and timeouts), index builds and 
 grants for them; the onboarding page shows the grants for each platform. On managed services, settings that only the
 provider can change come with the provider's steps instead of a button.
 
-## Next to Fabric's Database Hub
+On Azure Database for PostgreSQL, the assessment also reads the server's Azure resource: whether Microsoft Entra
+authentication is on and enforced, whether the data is encrypted with a customer-managed key, and whether the server is
+open to public networks, each with the steps in the Azure portal. These are the checks of Microsoft Fabric's
+[Database Hub monitoring for PostgreSQL](https://learn.microsoft.com/en-us/fabric/database/hub/monitor-postgresql).
 
-The estate follows Microsoft Fabric's
-[Database Hub monitoring for PostgreSQL](https://learn.microsoft.com/en-us/fabric/database/hub/monitor-postgresql): the
-same *What needs attention?* overview, the same estate with issue chips and lightbulb suggestion chips, the same Azure
-Monitor metric names, and the same four security assessments for Azure servers. rAIden then goes on where the Database
-Hub preview stops.
-
-| | Fabric Database Hub (preview) | rAIden |
-|---|---|---|
-| Servers | Azure Database for PostgreSQL flexible servers | any PostgreSQL 13 or newer: on-prem, VMs, Kubernetes, RDS and Aurora, Cloud SQL, Azure |
-| Data | Azure Monitor metrics | SQL through a `pg_monitor` login, plus Azure Monitor for Azure servers and the host agent on your own hosts |
-| Performance | seven signals: CPU, memory, storage, IOPS, connections, failed connections, replica lag | 96 metrics, among them all 74 Azure Monitor ones under the same names |
-| Security assessments | Entra authentication enabled and enforced, customer-managed key, public network access | the same four for Azure servers, plus password hashing, TLS, superusers, schema `public`, audit logging and extensions on every server |
-| Queries | not in the preview: no top queries, plans, wait events or log search | top queries, sessions and lock trees, wait events, tables and vacuum, replication, configuration |
-| Alerts | not in the preview | 23 built-in monitors and your own, with notifications to Teams, Slack or a webhook |
-| Fixing | "doesn't automatically resize, tune, or remediate" | incidents worked through by an AI with typed actions, a person approving where you choose |
-| Access | your Entra ID and Azure RBAC, nothing to install | console accounts and roles, a least-privilege login on each server |
-
-![The security area of an Azure server's assessment: the Database Hub's assessments, read from the Azure resource, with the portal steps](docs/screenshots/azure-security.png)
-
-If every server is an Azure flexible server and a read-only view inside Fabric is what you need, the Database Hub needs no
-login on the servers and no console to run. rAIden is for fleets that span platforms and for teams that want incidents
-handled, not only shown.
+![The security area of an Azure server's assessment: Entra authentication, customer-managed key and public network access, read from the Azure resource, with the portal steps](docs/screenshots/azure-security.png)
 
 ## Quick start
 
@@ -370,26 +351,6 @@ the least-privilege login from the onboarding page, a real lock queue, and `gpt-
 </tr>
 </table>
 
-## Credits
+## License
 
-* The estate, its chips and the security assessments follow Microsoft Fabric's
-  [Database Hub monitoring for PostgreSQL](https://learn.microsoft.com/en-us/fabric/database/hub/monitor-postgresql); the metric
-  names are those of [Azure Database for PostgreSQL monitoring](https://learn.microsoft.com/en-us/azure/postgresql/monitor/concepts-monitoring).
-* Two projects shaped how rAIden works with people:
-
-  | Idea | From | In rAIden |
-  |---|---|---|
-  | Agent sessions kept in PostgreSQL wait for hours and resume after a crash | [PilotSwarm](https://github.com/microsoft/PilotSwarm) | an incident's AI session lives in the state store: it waits at a gate until somebody decides and resumes after a restart |
-  | Recurring work on cron that re-arms itself | PilotSwarm | routines on cron, with time zones |
-  | Agents on the board as teammates, assigned issues | [Multica](https://github.com/multica-ai/multica) | rAIden is the assignee of every incident card; a person can take over and hand it back |
-  | Progress and blockers on the issue, every tool call in a log | Multica | each card says what it waits for; the timeline has every tool call with its result |
-  | A message to a running agent | Multica | a note on an open incident reaches rAIden at its next step |
-  | An inbox for decisions, not for every step | Multica | *Needs you*, and notifications only when a decision waits, an incident escalates or opens at SEV1 or SEV2, or resolves |
-  | Skills: a solved problem becomes a playbook | Multica | lessons from Harden go into the next incident on that server |
-
-* [`pg_crash`](https://github.com/cybertec-postgresql/pg_crash) by CYBERTEC is the chaos extension of the host agent's
-  tests. The host agent's `postgres-best-practices` skill is adapted from Microsoft's
-  [postgres-skills](https://github.com/microsoft/postgres-skills) (MIT, license kept next to the files).
-* The UI uses Barlow Semi Condensed and Atkinson Hyperlegible (SIL OFL).
-
-MIT licensed.
+MIT, see [LICENSE](LICENSE).
