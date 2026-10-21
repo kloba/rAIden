@@ -247,7 +247,7 @@ export function IncidentPage() {
         footer={<><Button variant="ghost" onClick={() => setResolving(false)}>Cancel</Button>
           <Button variant="primary" loading={act.isPending} onClick={() => act.mutate({ path: "resolve", body: { text: resolveNote } }, { onSuccess: () => setResolving(false) })}>Resolve incident</Button></>}>
         <p className="mb-3 text-[13.5px] text-ink-2">rAIden stops working on it and pending approvals are cancelled.</p>
-        <Textarea rows={3} value={resolveNote} onChange={(e) => setResolveNote(e.target.value)} placeholder="What fixed it (shows as the summary)" />
+        <Textarea rows={3} value={resolveNote} onChange={(e) => setResolveNote(e.target.value)} placeholder="What fixed it: the summary, and a note rAIden learns from" />
       </Modal>
     </div>
   );

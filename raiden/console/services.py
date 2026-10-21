@@ -121,6 +121,8 @@ def upsert_suggestion(
         row = Suggestion(server_id=server_id, kind=kind, category=category, title=title, detail=detail, source=source, fingerprint=fingerprint, data=data or {})
         s.add(row)
     else:
+        if row.status == "dismissed":
+            return row  # stays as the person left it
         if row.status == "resolved":
             row.status = "open"
         row.kind, row.category, row.title, row.detail, row.data = kind, category, title, detail, data or {}

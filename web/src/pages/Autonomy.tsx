@@ -22,16 +22,18 @@ export function AutonomyPage() {
   const [confirm, setConfirm] = useState<{ env: Env; stage: Stage } | null>(null);
   const [verify, setVerify] = useState("");
   const [maxActions, setMaxActions] = useState("");
+  const [learnAfter, setLearnAfter] = useState("");
   const p = policy.data?.policy;
   useEffect(() => {
     if (p) {
       setVerify(String(p.verify_window_s));
       setMaxActions(String(p.max_auto_actions));
+      setLearnAfter(String(p.learn_after));
     }
-  }, [p?.verify_window_s, p?.max_auto_actions]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [p?.verify_window_s, p?.max_auto_actions, p?.learn_after]); // eslint-disable-line react-hooks/exhaustive-deps
   const put = useMutation({
     mutationFn: (body: Record<string, unknown>) => api.put("/autonomy", body),
-    onSuccess: () => { for (const k of ["autonomy", "estate", "incident"]) qc.invalidateQueries({ queryKey: [k] }); toast("Autonomy policy saved. It applies from the next stage of every incident."); },
+    onSuccess: () => { for (const k of ["autonomy", "estate", "incident", "knowledge"]) qc.invalidateQueries({ queryKey: [k] }); toast("Autonomy policy saved. It applies from the next stage of every incident."); },
     onError: (e) => toast((e as Error).message, "crit"),
   });
   if (policy.isLoading || !p) return <Loading />;
@@ -113,6 +115,21 @@ export function AutonomyPage() {
               <div className="flex items-center gap-2">
                 <Input type="number" aria-label="Most actions in a plan rAIden may run without a person" min={1} max={50} value={maxActions} disabled={!isAdmin} onChange={(e) => setMaxActions(e.target.value)} className="w-20" />
                 {isAdmin && Number(maxActions) !== p.max_auto_actions && <Button size="sm" onClick={() => put.mutate({ max_auto_actions: Number(maxActions) })}>Save</Button>}
+              </div>
+            </div>
+            <div className="flex items-end justify-between gap-4 py-3">
+              <div>
+                <div className="text-[13.5px] font-semibold">Stop asking what people always approve</div>
+                <div className="mt-0.5 text-[12.5px] text-ink-3">
+                  After this many approvals in a row of the same action for the same kind of incident, rAIden offers not to ask again. An admin accepts it on
+                  the <Link to="/knowledge" className="font-semibold text-arc-ink hover:underline">Knowledge</Link> page; the next rejection takes it back. Off: rAIden asks every time.
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Input type="number" aria-label="Approvals in a row before rAIden offers not to ask again" min={2} max={20} value={learnAfter} disabled={!isAdmin || !p.learn_approvals}
+                  onChange={(e) => setLearnAfter(e.target.value)} className="w-16" />
+                {isAdmin && Number(learnAfter) !== p.learn_after && <Button size="sm" onClick={() => put.mutate({ learn_after: Number(learnAfter) })}>Save</Button>}
+                <Switch checked={p.learn_approvals} disabled={!isAdmin} onChange={(v) => put.mutate({ learn_approvals: v })} label="Learn from approvals" />
               </div>
             </div>
             <div className="flex items-end justify-between gap-4 py-3">

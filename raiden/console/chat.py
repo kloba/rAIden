@@ -10,6 +10,7 @@ from typing import Any, AsyncIterator
 
 from sqlalchemy import select
 
+from . import learning
 from .agent.loop import AgentLoop
 from .agent.prompts import PLATFORM_NOTES, SYSTEM_CHAT
 from .agent.tools import ToolContext, ToolOutcome, server_brief, tools_for
@@ -37,7 +38,8 @@ class ChatService:
                 return sess
         srv = s.get(Server, conv.server_id) if conv.server_id else None
         system = SYSTEM_CHAT.format(user=user, server=server_brief(s, conv.server_id) if conv.server_id else "none: use list_servers and fleet_metric, or ask which server",
-                                    platform_note=PLATFORM_NOTES.get(srv.platform, "") if srv else "")
+                                    platform_note=PLATFORM_NOTES.get(srv.platform, "") if srv else "",
+                                    knowledge=learning.prompt_block(s, conv.server_id, srv.environment if srv else None))
         sess = AgentSession(id=uuid.uuid4().hex, kind="chat", conversation_id=conv.id, server_id=conv.server_id, messages=[{"role": "system", "content": system}])
         s.add(sess)
         conv.session_id = sess.id
@@ -137,6 +139,24 @@ class ChatService:
                 self.rt.bus.publish("incident", id=iid)
                 await queue.put(("incident", {"incident_id": iid}))
                 return ToolOutcome(text=f"opened {iid}; the incident pipeline takes over")
+            if name == "remember":
+                with self.rt.db.session() as s:
+                    said = s.execute(select(ChatMessage).where(ChatMessage.conversation_id == conv_id, ChatMessage.role == "user")
+                                     .order_by(ChatMessage.id.desc()).limit(1)).scalar_one_or_none()
+                    try:
+                        k, new = learning.remember(s, kind=str(args.get("kind", "")), title=str(args.get("title", "")), body=str(args.get("body") or ""),
+                                                   scope=args.get("scope") or {}, source="person", author=user,
+                                                   retention="ephemeral" if args.get("retention") == "ephemeral" else "durable",
+                                                   evidence=[{"type": "chat", "id": str(said.id) if said else "", "chat": conv_id, "by": user,
+                                                              "text": said.content[:300] if said else ""}])
+                    except ValueError as exc:
+                        return ToolOutcome(text=f"ERROR: {exc}", ok=False)
+                    kid, scope = k.id, learning.scope_text(k.scope)
+                    if new:
+                        audit(s, user, "knowledge.create", f"knowledge #{kid}", "allow", via="chat", conversation=conv_id, title=k.title)
+                self.rt.bus.publish("knowledge")
+                return ToolOutcome(text=(f"remembered as #{kid} for {scope}" if new else f"already known as #{kid}"),
+                                   preview={"knowledge_id": kid, "title": str(args.get("title", "")), "scope": scope, "new": new})
             return ToolOutcome(text=f"ERROR: {name} is not available in chat", ok=False)
 
         ctx = ToolContext(self.rt, server_id, conversation_id=conv_id, session_id=sess_id, actor=user, on_special=special)

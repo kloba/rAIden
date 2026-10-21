@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowUp, ChevronRight, MessageSquarePlus, Terminal, Trash2, Zap } from "lucide-react";
+import { ArrowUp, ChevronRight, GraduationCap, MessageSquarePlus, Terminal, Trash2, Zap } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router";
 import { ApprovalBox } from "../components/incident";
@@ -44,6 +44,14 @@ function ToolRow({ m }: { m: ChatMessage }) {
   }
   if (d.name === "open_incident" && preview?.incident_id) {
     return <Link to={`/incidents/${preview.incident_id}`} className="block rounded-lg border border-arc-line bg-arc-soft px-3 py-1.5 text-[12.5px] font-semibold text-arc-ink hover:underline">Opened {preview.incident_id}: the incident pipeline takes over</Link>;
+  }
+  if (d.name === "remember" && preview?.knowledge_id) {
+    return (
+      <Link to={`/knowledge?item=${preview.knowledge_id}`} className="flex items-center gap-2 rounded-lg border border-arc-line bg-arc-soft px-3 py-1.5 text-[12.5px] text-arc-ink hover:underline">
+        <GraduationCap className="size-3.5 shrink-0" />
+        <span className="min-w-0 truncate"><span className="font-semibold">{preview.new ? "Remembered" : "Already known"}</span> for {preview.scope}: {preview.title}</span>
+      </Link>
+    );
   }
   return (
     <div className="rounded-lg border border-line bg-surface">

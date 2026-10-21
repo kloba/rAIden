@@ -1,10 +1,13 @@
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-  AlertOctagon, Bot, Check, CircleDot, Clock, Eye, Hand, MessageSquare, Radar, ShieldCheck, Signal, Terminal, User as UserIcon, Wrench, X, Zap,
+  AlertOctagon, Bot, Check, CircleDot, Clock, Eye, GraduationCap, Hand, MessageSquare, Radar, ShieldCheck, Signal, Terminal, User as UserIcon, Wrench, X, Zap,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
-import { duration, personName, titleCase, until } from "../lib/format";
-import { useDecide } from "../lib/hooks";
-import type { Approval, HardenItem, IncidentCard, IncidentEvent, Mode, PlanItem, Stage } from "../lib/types";
+import { Link } from "react-router";
+import { api } from "../lib/api";
+import { duration, incidentKind, personName, titleCase, until } from "../lib/format";
+import { useDecide, useMe } from "../lib/hooks";
+import type { Approval, ApprovalLearning, HardenItem, IncidentCard, IncidentEvent, Mode, PlanItem, Stage } from "../lib/types";
 import { Badge, Button, cn, DataTable, Markdown, RiskBadge, Textarea, Time, useToast } from "./ui";
 
 export const STAGES: { id: Stage; title: string }[] = [
@@ -108,6 +111,28 @@ export function HardeningList({ items }: { items: HardenItem[] }) {
   );
 }
 
+/** Under a plan waiting for a person: how often people approved it here, and whether rAIden will stop asking. */
+function LearningHint({ learning }: { learning: ApprovalLearning }) {
+  const where = `${incidentKind(learning.category)} in ${learning.environment}`;
+  const lines = learning.actions.flatMap((a) => {
+    if (a.high_risk) return [];
+    const who = a.approvers.map(personName).join(" and ");
+    if (a.learned?.status === "proposed") {
+      return [<>Approved {a.approved} times in a row{who && ` by ${who}`} for {where}: rAIden proposes not to ask again for <b>{a.title.toLowerCase()}</b>. <Link to={`/knowledge?approval=${a.learned.id}`} className="font-semibold text-arc-ink hover:underline">Review</Link></>];
+    }
+    if (a.learned?.status === "active") return [<>No longer asked for <b>{a.title.toLowerCase()}</b> here; the rest of this plan needs you.</>];
+    if (a.learned || a.approved === 0) return [];
+    return [<>Approved {a.approved} of {learning.learn_after} times in a row for {where}: at {learning.learn_after}, rAIden offers not to ask again for <b>{a.title.toLowerCase()}</b>.</>];
+  });
+  if (!lines.length) return null;
+  return (
+    <div className="flex gap-2 rounded-lg border border-arc-line bg-arc-soft/60 px-3 py-2 text-[12.5px] text-ink-2">
+      <GraduationCap className="mt-0.5 size-3.5 shrink-0 text-arc-ink" />
+      <div className="space-y-0.5">{lines.map((l, i) => <div key={i}>{l}</div>)}</div>
+    </div>
+  );
+}
+
 /** The decision box: what rAIden wants to do, how risky it is, and the two buttons. */
 export function ApprovalBox({ approval, canDecide, compact }: { approval: Approval; canDecide: boolean; compact?: boolean }) {
   const decide = useDecide();
@@ -133,6 +158,7 @@ export function ApprovalBox({ approval, canDecide, compact }: { approval: Approv
         <div className="mt-2.5 space-y-2.5">
           {p.root_cause && <div className="text-[13px] text-ink-2"><span className="font-semibold text-ink">Root cause: </span>{p.root_cause}</div>}
           {Array.isArray(p.plan) && <PlanList items={p.plan} />}
+          {!decided && approval.learning && <LearningHint learning={approval.learning} />}
           {Array.isArray(p.items) && <HardeningList items={p.items} />}
           {p.action && (
             <div className="rounded-lg border border-line bg-surface px-3 py-2 text-[13px]">
@@ -198,6 +224,7 @@ const KIND: Record<string, { icon: ReactNode; tone: string }> = {
   handback: { icon: <Bot className="size-3.5" />, tone: "text-arc-ink bg-arc-soft border-arc-line" },
   error: { icon: <AlertOctagon className="size-3.5" />, tone: "text-crit bg-crit-soft border-crit/25" },
   denied: { icon: <AlertOctagon className="size-3.5" />, tone: "text-crit bg-crit-soft border-crit/25" },
+  learned: { icon: <GraduationCap className="size-3.5" />, tone: "text-arc-ink bg-arc-soft border-arc-line" },
 };
 
 export function EventIcon({ kind, className }: { kind: string; className?: string }) {
@@ -210,7 +237,25 @@ export function Actor({ actor }: { actor: string }) {
   if (actor === "autopilot") return <span className="font-semibold text-arc-ink">Autopilot</span>;
   if (actor === "system") return <span className="font-semibold text-ink-3">System</span>;
   if (actor === "host-agent") return <span className="font-semibold text-arc-ink">Host agent</span>;
+  if (actor.startsWith("learned approval")) return <span className="font-semibold text-arc-ink">{titleCase(actor)}</span>;
   return <span className="font-semibold text-lamp-ink">{personName(actor)}</span>;
+}
+
+/** A gate rAIden opened because people always approved it: one click makes it ask again next time. */
+function AskAgain({ ids }: { ids: number[] }) {
+  const me = useMe();
+  const qc = useQueryClient();
+  const toast = useToast();
+  const [done, setDone] = useState(false);
+  const revoke = useMutation({
+    mutationFn: () => Promise.all(ids.map((id) => api.post(`/learned-approvals/${id}/revoke`, { reason: "asked again from the incident" }))),
+    onSuccess: () => { setDone(true); qc.invalidateQueries({ queryKey: ["knowledge"] }); toast("rAIden asks you again next time."); },
+    onError: (e) => toast((e as Error).message, "crit"),
+  });
+  if (me.data?.role === "viewer") return null;
+  return done ? <span className="text-[12px] font-semibold text-ink-3">rAIden asks again next time.</span> : (
+    <Button size="sm" variant="ghost" className="-ml-2.5" loading={revoke.isPending} onClick={() => revoke.mutate()}>Ask me next time</Button>
+  );
 }
 
 function ToolEvent({ ev }: { ev: IncidentEvent }) {
@@ -272,6 +317,8 @@ export function Timeline({ events, autonomy }: { events: IncidentEvent[]; autono
                   </div>
                   <div className={cn("mt-0.5 text-[13.5px] text-ink", ev.kind === "thought" ? "italic text-ink-2" : "font-semibold")}>{ev.kind === "thought" ? `“${ev.body || ev.title}”` : ev.title}</div>
                   {ev.body && ev.kind !== "thought" && <Markdown className="mt-1 text-[13px] text-ink-2">{ev.body}</Markdown>}
+                  {ev.kind === "learned" && Array.isArray(ev.data?.learned) && !ev.data.proposed && !ev.data.revoked && <div className="mt-1"><AskAgain ids={ev.data.learned} /></div>}
+                  {ev.kind === "learned" && ev.data?.proposed && <Link to="/knowledge" className="mt-1 inline-block text-[12.5px] font-semibold text-arc-ink hover:underline">Review on the Knowledge page</Link>}
                   {ev.kind === "action" && ev.data?.approved_by && (
                     <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11.5px] text-ink-3">
                       <RiskBadge risk={ev.data.risk ?? "low"} /> {ev.data.ok === false ? <Badge tone="crit">Failed</Badge> : <Badge tone="ok">Done</Badge>}

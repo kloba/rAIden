@@ -6,7 +6,7 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
-from . import monitors, routines
+from . import learning, monitors, routines
 from .policy import DEFAULT_POLICY
 from .services import get_setting, put_setting
 
@@ -26,3 +26,5 @@ def seed_defaults(s: Session, demo: bool = False) -> None:
     monitors.seed_builtin(s)
     s.flush()
     routines.seed_builtin(s)
+    s.flush()
+    learning.migrate_lessons(s)

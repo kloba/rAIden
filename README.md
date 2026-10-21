@@ -35,6 +35,10 @@ want a person to decide.
   and time zones.
 * **Answers questions in chat**: ask "who is blocking whom?" and rAIden reads the server with read-only tools, shows
   every step and proposes a change inline for you to approve.
+* **Learns from your team**: what people teach it, the reasons they give for their decisions and the incidents it resolves
+  become instructions and playbooks for every prompt they apply to, so nobody has to say it twice. A plan people approve
+  every time stops being a question once an admin accepts, and the next rejection takes that back. Once a night it
+  dreams over what is new, and every dream can be undone.
 * **Uses the models you choose**: Azure OpenAI (Entra ID or key), OpenAI, Anthropic, or any OpenAI-compatible server
   (vLLM, Ollama, LM Studio, a gateway). Routing per purpose with fallbacks, daily token and monthly cost budgets, and
   token accounting per incident, server and purpose.
@@ -56,8 +60,18 @@ say what for.
 ![An incident waiting at the production gate with its root cause, plan and signal](docs/screenshots/incident.png)
 
 A deploy started filtering a large table on a column without an index. rAIden found the query, wrote the root cause and
-a one-step plan with its risk, and stopped at the production gate. The signal chart shows the metric that fired and the
-rule; the timeline below has every tool call with its result, every decision and who made it.
+a one-step plan with its risk, and stopped at the production gate. Under the plan it says how often people approved the
+same fix here: after three approvals in a row it offers not to ask again. The signal chart shows the metric that fired
+and the rule; the timeline below has every tool call with its result, every decision and who made it.
+
+### What rAIden learned
+
+![The Knowledge page: a proposal not to ask again, an inferred rule waiting for a person, the instructions and the dream journal](docs/screenshots/knowledge.png)
+
+Alex approved the same plan for a lock queue in production three times, so rAIden offers not to ask again; an inferred
+rule waits for a person to confirm it. Below are the rules, facts and preferences people taught it, each with its scope
+and how often it went into a prompt, and on the right the journal of its nightly dreams. See
+[how rAIden learns](docs/learning.md).
 
 ### Servers
 
@@ -189,7 +203,7 @@ raiden console --demo --port 8787          # http://127.0.0.1:8787
                     │  Azure Monitor  + 15 min                     typed actions         fallbacks      OpenAI, Anthropic
                     │  host agent     rollups                      SQL guard, audit      budgets        OpenAI-compatible
                     │
-                    │ Routines (cron) · Investigate (chat) · Assessments · Notifications · Audit log
+                    │ Routines (cron) · Investigate (chat) · Knowledge and dreams · Assessments · Notifications · Audit log
                     │
                     ├── read-only login (pg_monitor) and typed actions ──▶ PostgreSQL on-prem, VMs, Kubernetes, Azure, AWS, GCP
                     └── heartbeats, host metrics, log-driven incidents ◀── rAIden host agent (optional, on the database host)
@@ -220,6 +234,10 @@ Rules that hold whatever the breakers say:
 * a plan longer than the limit you set (8 actions by default) always waits for a person;
 * with no AI endpoint or budget left, every gate turns into an approval and incidents wait for a person instead of
   failing silently. Monitors and check routines keep running.
+
+One gate opens without a person when people have already said yes often enough: a plan approved 3 times in a row for the
+same kind of incident, once an admin accepts not to be asked again. Never for a high-risk action, and the next rejection
+takes it back ([how rAIden learns](docs/learning.md)).
 
 ### The host agent
 

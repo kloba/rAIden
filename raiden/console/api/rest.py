@@ -149,7 +149,7 @@ def routines(runtime: Any = Depends(rt), _: User = Depends(viewer)) -> list[dict
 
 @router.get("/routines/templates")
 def templates(_: User = Depends(viewer)) -> list[dict[str, Any]]:
-    return [{**t, "schedule": Cron(t["cron"]).describe()} for t in TEMPLATES]
+    return [{**t, "schedule": Cron(t["cron"]).describe()} for t in TEMPLATES if t["kind"] != "dream"]  # one dream per console, built in
 
 
 @router.post("/routines")

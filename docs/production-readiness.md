@@ -1,6 +1,6 @@
 # Production readiness
 
-rAIden Console 0.2.0, assessed on 21 October 2026. For every area: where it stands, the evidence, and what is still
+rAIden Console 0.2.0, assessed on 22 October 2026. For every area: where it stands, the evidence, and what is still
 missing. *Ready* means we would run it on production servers today with the defaults; *ready, with limits* means ready
 within the limits named; *not yet* means do not rely on it.
 
@@ -9,15 +9,15 @@ within the limits named; *not yet* means do not rely on it.
 | Area | Status | Evidence | Still missing |
 |---|---|---|---|
 | [Works on real PostgreSQL](#works-on-real-postgresql) | Ready on self-managed PostgreSQL 13 to 18 | 240 driver checks on six versions and a standby; 32 end-to-end checks with a real model, three runs | managed services, Kubernetes and TLS to the servers not run live |
-| [The changes it makes](#the-changes-it-makes) | Ready | typed actions, approvals, the plan as the contract, plans checked against the login's grants, timeouts | |
+| [The changes it makes](#the-changes-it-makes) | Ready | typed actions, approvals, the plan as the contract, plans checked against the login's grants, timeouts, learned approvals only after an admin accepts | |
 | [Sign-in and access](#sign-in-and-access) | Ready, with limits | scrypt, signed cookies, CSRF header, three roles, throttled sign-in, security headers, audit log | single sign-on, MFA, per-environment roles, API tokens for people |
 | [Secrets](#secrets) | Ready, with limits | database passwords and API keys encrypted at rest; agent tokens hashed; Entra ID without keys | key rotation |
 | [Staying up](#staying-up) | Ready, with limits | incidents resume after a restart; one console per state store, enforced; notifications retried | failover between consoles; schema migrations |
 | [Scale](#scale) | Measured on one machine | a collection round of 300 servers in 47 ms; 59 MB of store a server at the default retention | a fleet of hundreds of real servers |
 | [Watching the console](#watching-the-console) | Ready | health and readiness endpoints, Prometheus with the console's own health, JSON logs | tracing |
-| [Accessibility](#accessibility) | Ready | no WCAG 2.1 A or AA violation on 18 pages in both themes (axe-core) | a screen reader walkthrough |
+| [Accessibility](#accessibility) | Ready | no WCAG 2.1 A or AA violation on 19 pages in both themes (axe-core) | a screen reader walkthrough |
 | [Supply chain](#supply-chain) | Ready, with limits | locked npm and hash-pinned Python dependencies, `pip check`, an unprivileged image | SBOM, signed images, base images pinned by digest |
-| [Tests and CI](#tests-and-ci) | Ready | 189 tests, the end-to-end incident, lint, an image smoke test on every push | browser and accessibility checks in CI |
+| [Tests and CI](#tests-and-ci) | Ready | 196 tests, the end-to-end incident, lint, an image smoke test on every push | browser and accessibility checks in CI |
 | [AI: cost, control, data](#ai-cost-control-and-data) | Ready, with limits | budgets, routing per purpose, token accounting; 82,167 tokens for the real incident | redaction of literals in statement text |
 
 [Before you point it at production](#before-you-point-it-at-production) is the checklist; [what comes next](#what-comes-next)
@@ -55,6 +55,11 @@ Start with a staging server, and keep the production gates on approval until you
   the collector's, inside the `CONNECTION LIMIT 5` of the onboarding SQL.
 * With no AI endpoint or no budget left, every gate turns into an approval: incidents wait for a person instead of
   failing silently.
+* A remediation plan goes ahead without a person only where people already said yes: the same action for the same kind
+  of incident approved 3 times in a row, and an admin accepted not to be asked again. Never for high-risk actions; the
+  next rejection takes it back; the decision is on the record as *learned approval #n*
+  ([how rAIden learns](learning.md)). What rAIden learns otherwise (instructions, playbooks) shapes its reasoning and
+  lifts no gate.
 
 Evidence: the real incident in [the validation](validation.md#the-incident) (cancel of the waiting `ALTER TABLE` after a
 person approved it, 2 min 40 s from detection to the report) and the end-to-end test on the demo fleet.
@@ -155,7 +160,7 @@ Missing: tracing, and the audit log has no retention setting yet (it only grows;
 ## Accessibility
 
 [`web/scripts/a11y.mjs`](../web/scripts/a11y.mjs) (`make a11y`) runs axe-core 4.14.0, the engine of Lighthouse's
-accessibility audit, with the WCAG 2.1 A and AA rules on 18 pages in the light and the dark theme: the sign-in page,
+accessibility audit, with the WCAG 2.1 A and AA rules on 19 pages in the light and the dark theme: the sign-in page,
 every page of the console, an open incident and a resolved one. It finds no violations. An earlier run on 16 of these
 pages, before the fixes, failed on 905 elements. Keyboard focus is always visible, and the decorative animations (the
 current on the incident board, the lamp of a gate, the pulse of a server that is down) stop for people who ask for
@@ -177,12 +182,12 @@ vulnerability scan in CI.
 
 ## Tests and CI
 
-On every push ([`.github/workflows/tests.yml`](../.github/workflows/tests.yml)): the 189 tests of the host agent and the
+On every push ([`.github/workflows/tests.yml`](../.github/workflows/tests.yml)): the 196 tests of the host agent and the
 console, none of which needs PostgreSQL or a model (API, autonomy policy, SQL guard, assessment, the driver against a
-fake connection, metric store, sign-in throttling, headers, the store lock; the two-minute end-to-end incident on the
-demo fleet runs in a job of its own), ruff on the console, the UI's typecheck and build, and the image with a smoke test
-(readiness, the demo, the Content-Security-Policy). The checks against real servers ([`tests/live/`](../tests/live)) run
-on a lab VM by hand.
+fake connection, metric store, sign-in throttling, headers, the store lock, learning and dreams; the end-to-end incident
+on the demo fleet, including the next one going through the gate on a learned approval, runs in a job of its own), ruff
+on the console, the UI's typecheck and build, and the image with a smoke test (readiness, the demo, the
+Content-Security-Policy). The checks against real servers ([`tests/live/`](../tests/live)) run on a lab VM by hand.
 
 Missing: browser tests and the accessibility check in CI.
 

@@ -2,7 +2,7 @@
 
 `check` routines are deterministic (SQL and metrics, no tokens); `agent` routines are short AI sessions with read-only
 tools that end in findings. Findings become issue/suggestion chips on the server; CRIT findings of routines set to
-`incident` open an incident.
+`incident` open an incident. The `dream` routine is the fleet's nightly learning pass (dreams.py).
 """
 
 from __future__ import annotations
@@ -14,7 +14,7 @@ from typing import Any
 
 from sqlalchemy import select
 
-from . import assessment, fmt
+from . import assessment, fmt, learning
 from .agent.loop import AgentLoop
 from .agent.prompts import PLATFORM_NOTES, SYSTEM_ROUTINE
 from .agent.tools import ToolContext, ToolOutcome, server_brief, tools_for
@@ -54,9 +54,12 @@ TEMPLATES: list[dict[str, Any]] = [
          prompt="Review vacuum health: the tables with the most dead rows (table_health), their last autovacuum, transaction ID age (wraparound_status) and "
                 "the autovacuum settings (get_settings pattern autovacuum). Recommend per-table autovacuum settings where the defaults do not keep up.",
          description="Weekly AI review of dead rows, autovacuum settings and freezing, with per-table recommendations."),
+    dict(key="dream", name="Dream", kind="dream", cron="0 3 * * *", on_finding="report",
+         description="Once a night rAIden turns the team's decisions, notes and chats into instructions and playbooks, and proposes not to ask again "
+                     "for what people always approve. It reads only what is new; with nothing new it makes no model call."),
 ]
 BY_KEY = {t["key"]: t for t in TEMPLATES}
-DEFAULT_ON = {"health-patrol", "security-posture", "config-drift", "wraparound-watch", "backup-readiness", "daily-report"}
+DEFAULT_ON = {"health-patrol", "security-posture", "config-drift", "wraparound-watch", "backup-readiness", "daily-report", "dream"}
 
 
 def seed_builtin(s: Any) -> int:
@@ -163,6 +166,9 @@ class RoutineRunner:
             servers = [srv.id for srv in s.execute(select(Server).where(Server.enabled.is_(True)).order_by(Server.id)).scalars()
                        if _scoped(r, srv)]
             kind, key, sel, prompt, name, on_finding = r.kind, r.key or f"routine-{r.id}", list(r.checks or []), r.prompt, r.name, r.on_finding
+        if kind == "dream":
+            await self._dream(rid, run_id, by)
+            return
         self.rt.bus.publish("routine", id=rid, run_id=run_id, status="running")
         results, tokens_in, tokens_out = [], 0, 0
         for sid in servers:
@@ -192,6 +198,28 @@ class RoutineRunner:
                 r.last_run_at, r.last_status = utcnow(), worst
         self.rt.bus.publish("routine", id=rid, run_id=run_id, status=worst)
 
+    async def _dream(self, rid: int, run_id: int, by: str) -> None:
+        """The fleet's dream, not a server's: one run, its summary and journal as the run's report."""
+        from .dreams import DreamBusy
+
+        self.rt.bus.publish("routine", id=rid, run_id=run_id, status="running")
+        try:
+            res = await self.rt.dreamer.run(run_id, by)
+            status = "ok" if res["status"] == "done" else "error"
+            summary, report, ti, to = res["summary"], res["report"], res["tokens_in"], res["tokens_out"]
+        except DreamBusy as exc:
+            status, summary, report, ti, to = "ok", f"{exc}: this run left it alone", "", 0, 0
+        except Exception as exc:  # noqa: BLE001
+            log.exception("dream failed")
+            status, summary, report, ti, to = "error", f"{exc.__class__.__name__}: {exc}", "", 0, 0
+        with self.rt.db.session() as s:
+            run = s.get(RoutineRun, run_id)
+            run.finished_at, run.status, run.summary, run.report, run.tokens_in, run.tokens_out = utcnow(), status, summary, report, ti, to
+            r = s.get(Routine, rid)
+            if r:
+                r.last_run_at, r.last_status = utcnow(), status
+        self.rt.bus.publish("routine", id=rid, run_id=run_id, status=status)
+
     async def _check(self, sid: str, sel: list[str], key: str) -> dict[str, Any]:
         latest = self.rt.store.latest_values(sid)
         facts = await self.rt.server_facts(sid) if any(not x.startswith("metrics") for x in sel) else {}
@@ -208,7 +236,8 @@ class RoutineRunner:
     async def _agent(self, sid: str, name: str, task: str, run_id: int) -> tuple[dict[str, Any], int, int]:
         with self.rt.db.session() as s:
             srv = s.get(Server, sid)
-            system = SYSTEM_ROUTINE.format(name=name, server=server_brief(s, sid), platform_note=PLATFORM_NOTES.get(srv.platform, ""), task=task)
+            system = SYSTEM_ROUTINE.format(name=name, server=server_brief(s, sid), platform_note=PLATFORM_NOTES.get(srv.platform, ""), task=task,
+                                           knowledge=learning.prompt_block(s, sid, srv.environment))
             sess = AgentSession(id=uuid.uuid4().hex, kind="routine", routine_run_id=run_id, server_id=sid,
                                 messages=[{"role": "system", "content": system}, {"role": "user", "content": f"Run the routine now on {srv.name}. {task}"}])
             s.add(sess)

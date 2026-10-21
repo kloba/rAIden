@@ -1,8 +1,10 @@
 """The whole incident loop on the demo fleet, through the HTTP API: a monitor detects a lock queue, rAIden triages and
 diagnoses on its own, stops at the production gate with its plan, a person approves, rAIden fixes it, watches the
-metrics, proposes protections, a person approves those, and the incident closes with a report.
+metrics, proposes protections, a person approves those, and the incident closes with a report. People had approved the
+same plan three times before, so an admin accepts not to be asked again, and the next lock queue goes through the gate
+on its own.
 
-It takes about two minutes of wall time (the monitors need a minute of data), so it runs when RAIDEN_SLOW_TESTS=1.
+It takes about four minutes of wall time (the monitors need a minute of data), so it runs when RAIDEN_SLOW_TESTS=1.
 """
 
 from __future__ import annotations
@@ -48,6 +50,9 @@ def test_lock_queue_from_detection_to_report(tmp_path: Path):
         assert inc["stage"] in ("diagnose", "remediate") and inc["state"] == "waiting"
         approval = inc["pending_approvals"][0]
         assert approval["kind"] == "gate" and approval["payload"]["plan"][0]["action"] == "terminate_backend"
+        # the plan says what rAIden learned from the decisions before: the same plan, approved three times in a row
+        hint = c.get(f"/api/v1/incidents/{inc['id']}").json()["pending_approvals"][0]["learning"]["actions"][0]
+        assert hint["approved"] == 3 and hint["learned"]["status"] == "proposed"
         r = c.post(f"/api/v1/approvals/{approval['id']}/decide", json={"approve": True, "comment": "go"}, headers=H)
         assert r.status_code == 200
 
@@ -75,3 +80,20 @@ def test_lock_queue_from_detection_to_report(tmp_path: Path):
         assert "back to 0" in verified["body"]
         # the fix is real in the simulation, not only in the story: the next collection sees the queue gone
         wait_for(lambda: c.get("/api/v1/servers/orders-prod").json()["metrics"]["blocked_sessions"] < 5, 60, "the next collection to see the queue gone")
+
+        # not asking again: an admin accepts, and the next lock queue in production goes through the gate on its own
+        learned = c.post(f"/api/v1/learned-approvals/{hint['learned']['id']}/accept", json={}, headers=H).json()
+        assert learned["status"] == "active" and learned["action"] == "terminate_backend"
+        c.app.state.rt.fleet.begin("orders-prod", "lock_queue")
+
+        def next_one():
+            for card in c.get("/api/v1/incidents?status=board").json():
+                if card["server_id"] == "orders-prod" and card["number"] > inc["number"] and card["category"] == "locks" and card["stage"] in ("remediate", "verify", "harden", "resolved"):
+                    return c.get(f"/api/v1/incidents/{card['id']}").json()
+            return None
+
+        again = wait_for(next_one, 240, "the next lock queue past the remediation gate")
+        assert again["plan"][0]["approved_by"] == f"learned approval #{learned['id']}"
+        assert any(e["kind"] == "learned" and e["title"].startswith("Learned approval: Terminate a session") for e in again["events"])
+        decided = [a for a in again["approvals"] if a["stage"] == "remediate"]
+        assert [(a["status"], a["decided_by"]) for a in decided] == [("approved", f"learned approval #{learned['id']}")]

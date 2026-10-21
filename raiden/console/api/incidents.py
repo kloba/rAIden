@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy import or_, select
 
+from .. import learning
 from ..db import utcnow
 from ..models import AgentSession, Approval, Incident, IncidentEvent, Server, User
 from ..policy import ENVIRONMENTS, GATED, MODES, STAGES, describe, merged
@@ -45,6 +46,8 @@ class PolicyIn(BaseModel):
     verify_window_s: int | None = Field(default=None, ge=15, le=3600)
     max_auto_actions: int | None = Field(default=None, ge=1, le=50)
     budget_exhausted: str | None = Field(default=None, pattern="^(human)$")
+    learn_approvals: bool | None = None
+    learn_after: int | None = Field(default=None, ge=2, le=20)
 
 
 def _names(s: Any) -> dict[str, str]:
@@ -86,11 +89,16 @@ def get_incident(iid: str, runtime: Any = Depends(rt), _: User = Depends(viewer)
         events = list(s.execute(select(IncidentEvent).where(IncidentEvent.incident_id == iid).order_by(IncidentEvent.ts, IncidentEvent.id)).scalars())
         approvals = list(s.execute(select(Approval).where(Approval.incident_id == iid).order_by(Approval.id)).scalars())
         out = serial.incident_detail(inc, _names(s).get(inc.server_id or ""), events, approvals)
+        policy = runtime.pipeline.policy(s)
+        for a in approvals:  # a plan waiting for a person: how often people approved it before, and what rAIden learned from that
+            if a.status == "pending" and (h := learning.hint(s, a, inc, policy)):
+                for x in (*out["pending_approvals"], *out["approvals"]):
+                    if x["id"] == a.id:
+                        x["learning"] = h
         sess = s.execute(select(AgentSession).where(AgentSession.incident_id == iid)).scalar_one_or_none()
         out["session"] = {"turns": sess.turns, "tool_calls": sess.tool_calls, "model": sess.model, "status": sess.status} if sess else None
         srv = s.get(Server, inc.server_id) if inc.server_id else None
         if srv:
-            policy = runtime.pipeline.policy(s)
             from ..policy import mode_for
 
             out["autonomy"] = {st: mode_for(policy, srv.environment, srv.autonomy, st) for st in GATED}
@@ -157,6 +165,7 @@ def resolve(iid: str, body: Note, runtime: Any = Depends(rt), who: User = Depend
             raise HTTPException(404, "No such incident.")
         if body.text:
             inc.summary = body.text
+            add_event(s, inc, "comment", f"{who.name or who.email} wrote what fixed it", body.text, actor=who.email)  # a note the next dream reads
     runtime.pipeline.move(iid, "resolved", who.email)
     return {"ok": True}
 
@@ -171,11 +180,13 @@ def approvals(status: str = "pending", runtime: Any = Depends(rt), _: User = Dep
         rows = list(s.execute(stmt).scalars())
         names = _names(s)
         incs = {i.id: i for i in s.execute(select(Incident).where(Incident.id.in_([a.incident_id for a in rows if a.incident_id]))).scalars()}
+        policy = runtime.pipeline.policy(s)
         out = []
         for a in rows:
             inc = incs.get(a.incident_id or "")
+            hint = learning.hint(s, a, inc, policy) if a.status == "pending" else None
             out.append({**serial.approval(a), "server_name": names.get(a.server_id or "", a.server_id), "incident_title": inc.title if inc else None,
-                        "severity": inc.severity if inc else None, "incident_stage": inc.stage if inc else None})
+                        "severity": inc.severity if inc else None, "incident_stage": inc.stage if inc else None, **({"learning": hint} if hint else {})})
         return out
 
 
@@ -216,7 +227,7 @@ def put_policy(body: PolicyIn, runtime: Any = Depends(rt), who: User = Depends(a
                     if cur["environments"][env].get(st) != mode:
                         audit(s, who.email, "autonomy.update", env, "allow", stage=st, mode=mode)
                     cur["environments"][env][st] = mode
-        for k in ("high_risk_always_human", "verify_window_s", "max_auto_actions", "budget_exhausted"):
+        for k in ("high_risk_always_human", "verify_window_s", "max_auto_actions", "budget_exhausted", "learn_approvals", "learn_after"):
             v = getattr(body, k)
             if v is not None:
                 if cur.get(k) != v:

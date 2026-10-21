@@ -169,6 +169,12 @@ class DemoFleet:
             return {"first_pid": 61200 + rnd.randint(0, 900)}
         return {}
 
+    def begin(self, sid: str, kind: str, now: float | None = None) -> None:
+        """Start one scenario now (the end-to-end test replays a lock queue after rAIden learned to fix it)."""
+        now = now or time.time()
+        with self._lock:
+            self.scenarios.append(Scenario(kind, sid, now, data=self._scenario_data(kind, sid, now)))
+
     def tick(self, now: float) -> None:
         """Start a fresh scenario now and then so a long-running demo keeps producing work."""
         with self._lock:
