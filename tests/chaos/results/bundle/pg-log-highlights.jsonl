@@ -1,0 +1,73 @@
+{"t":"01:57:13.425","sev":"LOG","st":null,"m":"background worker \"logical replication launcher\" (PID 65245) was terminated by signal 9: Killed","bt":"postmaster"}
+{"t":"01:57:30.058","sev":"LOG","st":null,"m":"checkpointer process (PID 65356) was terminated by signal 9: Killed","bt":"postmaster"}
+{"t":"01:57:38.387","sev":"LOG","st":null,"m":"io worker (PID 65489) was terminated by signal 9: Killed","bt":"postmaster"}
+{"t":"01:57:13.425","sev":"LOG","st":null,"m":"terminating any other active server processes","bt":"postmaster"}
+{"t":"01:57:21.740","sev":"LOG","st":null,"m":"terminating any other active server processes","bt":"postmaster"}
+{"t":"00:47:56.773","sev":"ERROR","st":"0A000","m":"ALTER SYSTEM is not allowed in this environment","bt":"client backend"}
+{"t":"00:55:17.333","sev":"LOG","st":null,"m":"statement: CREATE OR REPLACE FUNCTION raiden.block_unlisted_extension() RETURNS event_trigger LANGUAGE plpgsql SET search_path = pg_catalog AS $fn$\nDECLARE r record;\nBEGI","bt":"client backend"}
+{"t":"00:55:17.358","sev":"ERROR","st":"42501","m":"raiden protection: extension \"pg_surgery\" is not on the allowlist (table raiden.allowed_extensions)","bt":"client backend"}
+{"t":"00:55:22.253","sev":"ERROR","st":"42501","m":"raiden protection: extension \"pg_surgery\" is not on the allowlist (table raiden.allowed_extensions)","bt":"client backend"}
+{"t":"01:03:19.129","sev":"LOG","st":null,"m":"statement: CREATE OR REPLACE FUNCTION raiden.block_protected_drop() RETURNS event_trigger LANGUAGE plpgsql SET search_path=pg_catalog,raiden AS $fn$\nDECLARE r record;\nBEG","bt":"client backend"}
+{"t":"01:03:19.175","sev":"ERROR","st":"42501","m":"raiden protection: table public.scratch_protect_probe is protected and cannot be dropped","bt":"client backend"}
+{"t":"01:03:32.252","sev":"ERROR","st":"42501","m":"raiden protection: table public.scratch_owner_drop_probe is protected and cannot be dropped","bt":"client backend"}
+{"t":"01:33:07.059","sev":"ERROR","st":"42501","m":"raiden protection: extension \"pg_surgery\" is not on the allowlist (table raiden.allowed_extensions)","bt":"client backend"}
+{"t":"01:07:45.222","sev":"FATAL","st":"57P01","m":"terminating connection due to administrator command","bt":"client backend"}
+{"t":"01:07:45.322","sev":"FATAL","st":"57P01","m":"terminating connection due to administrator command","bt":"client backend"}
+{"t":"01:57:13.475","sev":"FATAL","st":"57P03","m":"the database system is in recovery mode","bt":"client backend"}
+{"t":"01:57:13.547","sev":"FATAL","st":"57P03","m":"the database system is in recovery mode","bt":"client backend"}
+{"t":"01:57:13.431","sev":"LOG","st":null,"m":"all server processes terminated; reinitializing","bt":"postmaster"}
+{"t":"01:57:21.748","sev":"LOG","st":null,"m":"all server processes terminated; reinitializing","bt":"postmaster"}
+{"t":"00:50:54.578","sev":"ERROR","st":"XX001","m":"unexpected chunk number 2 (expected 1) for toast value 91601 in pg_toast_84508","bt":"client backend"}
+{"t":"00:50:57.817","sev":"ERROR","st":"XX001","m":"unexpected chunk number 2 (expected 1) for toast value 91601 in pg_toast_84508","bt":"client backend"}
+{"t":"00:50:57.849","sev":"ERROR","st":"XX001","m":"unexpected chunk number 2 (expected 1) for toast value 91817 in pg_toast_84508","bt":"client backend"}
+{"t":"00:45:56.528","sev":"FATAL","st":"28000","m":"role \"root\" does not exist","bt":"client backend"}
+{"t":"00:45:56.671","sev":"LOG","st":null,"m":"statement: DROP TABLE IF EXISTS entries","bt":"client backend"}
+{"t":"00:45:57.060","sev":"FATAL","st":"28000","m":"role \"root\" does not exist","bt":"client backend"}
+{"t":"01:07:02.080","sev":"FATAL","st":"53300","m":"remaining connection slots are reserved for roles with the SUPERUSER attribute","bt":"client backend"}
+{"t":"01:07:05.795","sev":"FATAL","st":"53300","m":"remaining connection slots are reserved for roles with the SUPERUSER attribute","bt":"client backend"}
+{"t":"01:07:15.937","sev":"FATAL","st":"53300","m":"remaining connection slots are reserved for roles with the SUPERUSER attribute","bt":"client backend"}
+{"t":"01:12:50.691","sev":"FATAL","st":"53300","m":"too many connections for role \"scratch_reporting_cap_probe\"","bt":"client backend"}
+{"t":"01:41:37.045","sev":"FATAL","st":"53300","m":"too many connections for role \"reporting\"","bt":"client backend"}
+{"t":"01:16:24.035","sev":"LOG","st":null,"m":"process 46731 still waiting for AccessExclusiveLock on relation 104379 of database 16434 after 1000.076 ms","bt":"client backend"}
+{"t":"01:16:24.086","sev":"LOG","st":null,"m":"process 46652 still waiting for AccessShareLock on relation 104379 of database 16434 after 1000.077 ms","bt":"client backend"}
+{"t":"01:16:24.147","sev":"LOG","st":null,"m":"process 46582 still waiting for RowExclusiveLock on relation 104379 of database 16434 after 1000.046 ms","bt":"client backend"}
+{"t":"00:45:56.528","sev":"FATAL","st":"28000","m":"role \"root\" does not exist","bt":"client backend"}
+{"t":"00:45:57.060","sev":"FATAL","st":"28000","m":"role \"root\" does not exist","bt":"client backend"}
+{"t":"00:45:58.061","sev":"FATAL","st":"28000","m":"role \"root\" does not exist","bt":"client backend"}
+{"t":"00:45:59.061","sev":"FATAL","st":"28000","m":"role \"root\" does not exist","bt":"client backend"}
+{"t":"00:46:00.061","sev":"FATAL","st":"28000","m":"role \"root\" does not exist","bt":"client backend"}
+{"t":"00:46:01.061","sev":"FATAL","st":"28000","m":"role \"root\" does not exist","bt":"client backend"}
+{"t":"00:46:02.061","sev":"FATAL","st":"28000","m":"role \"root\" does not exist","bt":"client backend"}
+{"t":"00:46:03.061","sev":"FATAL","st":"28000","m":"role \"root\" does not exist","bt":"client backend"}
+{"t":"00:46:04.061","sev":"FATAL","st":"28000","m":"role \"root\" does not exist","bt":"client backend"}
+{"t":"00:46:05.061","sev":"FATAL","st":"28000","m":"role \"root\" does not exist","bt":"client backend"}
+{"t":"00:46:06.062","sev":"FATAL","st":"28000","m":"role \"root\" does not exist","bt":"client backend"}
+{"t":"00:46:07.062","sev":"FATAL","st":"28000","m":"role \"root\" does not exist","bt":"client backend"}
+{"t":"00:46:08.062","sev":"FATAL","st":"28000","m":"role \"root\" does not exist","bt":"client backend"}
+{"t":"00:46:09.062","sev":"FATAL","st":"28000","m":"role \"root\" does not exist","bt":"client backend"}
+{"t":"00:46:10.062","sev":"FATAL","st":"28000","m":"role \"root\" does not exist","bt":"client backend"}
+{"t":"00:46:11.062","sev":"FATAL","st":"28000","m":"role \"root\" does not exist","bt":"client backend"}
+{"t":"00:46:12.062","sev":"FATAL","st":"28000","m":"role \"root\" does not exist","bt":"client backend"}
+{"t":"00:46:13.062","sev":"FATAL","st":"28000","m":"role \"root\" does not exist","bt":"client backend"}
+{"t":"00:46:14.062","sev":"FATAL","st":"28000","m":"role \"root\" does not exist","bt":"client backend"}
+{"t":"00:46:15.063","sev":"FATAL","st":"28000","m":"role \"root\" does not exist","bt":"client backend"}
+{"t":"00:46:16.063","sev":"FATAL","st":"28000","m":"role \"root\" does not exist","bt":"client backend"}
+{"t":"00:46:17.063","sev":"FATAL","st":"28000","m":"role \"root\" does not exist","bt":"client backend"}
+{"t":"00:46:18.063","sev":"FATAL","st":"28000","m":"role \"root\" does not exist","bt":"client backend"}
+{"t":"00:46:19.063","sev":"FATAL","st":"28000","m":"role \"root\" does not exist","bt":"client backend"}
+{"t":"00:46:20.063","sev":"FATAL","st":"28000","m":"role \"root\" does not exist","bt":"client backend"}
+{"t":"00:46:21.063","sev":"FATAL","st":"28000","m":"role \"root\" does not exist","bt":"client backend"}
+{"t":"00:46:22.063","sev":"FATAL","st":"28000","m":"role \"root\" does not exist","bt":"client backend"}
+{"t":"00:46:23.063","sev":"FATAL","st":"28000","m":"role \"root\" does not exist","bt":"client backend"}
+{"t":"00:46:24.063","sev":"FATAL","st":"28000","m":"role \"root\" does not exist","bt":"client backend"}
+{"t":"00:46:25.064","sev":"FATAL","st":"28000","m":"role \"root\" does not exist","bt":"client backend"}
+{"t":"00:46:26.064","sev":"FATAL","st":"28000","m":"role \"root\" does not exist","bt":"client backend"}
+{"t":"00:46:27.064","sev":"FATAL","st":"28000","m":"role \"root\" does not exist","bt":"client backend"}
+{"t":"00:46:28.064","sev":"FATAL","st":"28000","m":"role \"root\" does not exist","bt":"client backend"}
+{"t":"00:46:29.064","sev":"FATAL","st":"28000","m":"role \"root\" does not exist","bt":"client backend"}
+{"t":"00:46:30.065","sev":"FATAL","st":"28000","m":"role \"root\" does not exist","bt":"client backend"}
+{"t":"00:46:31.065","sev":"FATAL","st":"28000","m":"role \"root\" does not exist","bt":"client backend"}
+{"t":"00:46:32.065","sev":"FATAL","st":"28000","m":"role \"root\" does not exist","bt":"client backend"}
+{"t":"00:46:33.065","sev":"FATAL","st":"28000","m":"role \"root\" does not exist","bt":"client backend"}
+{"t":"00:46:34.065","sev":"FATAL","st":"28000","m":"role \"root\" does not exist","bt":"client backend"}
+{"t":"00:46:35.065","sev":"FATAL","st":"28000","m":"role \"root\" does not exist","bt":"client backend"}

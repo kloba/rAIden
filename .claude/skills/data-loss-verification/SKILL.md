@@ -1,6 +1,6 @@
 ---
 name: data-loss-verification
-description: Run and interpret the authoritative application-data oracle (ledger.py reconcile --json) after ANY incident that may have touched data - crash recovery, PITR/restore, corruption repair, DROP/TRUNCATE, disk-full write failures. Explains acked/present_total/lost/corrupt/unreadable/unknown_*/table_missing/ok and the playbooks for lost > 0, corrupt/unreadable > 0 and table_missing.
+description: Run and interpret the authoritative application-data oracle (ledger.py reconcile --json) after ANY incident that may have touched data - crash recovery, PITR/restore, corruption repair, DROP/TRUNCATE, disk-full write failures. Explains acked/present/lost/corrupt/unreadable/unrecorded_rows_in_db/error/ok and the playbooks for lost > 0, corrupt/unreadable > 0 and 'table entries does not exist'.
 ---
 
 # data-loss-verification - did we lose or damage any acknowledged commit?
@@ -25,24 +25,25 @@ cannot verify => final status at best `mitigated`, explain why.
 | Field | Meaning | Good value |
 |---|---|---|
 | `acked` | commits the clients got a success ACK for | any |
-| `present_total` | rows present in public.ledger | >= acked - lost |
+| `present` | acked rows present in public.entries | = acked |
 | `lost` | acked rows that are missing | **0** |
 | `corrupt` | rows present but content differs from what was acked | **0** |
 | `unreadable` | rows present but reading them raises an error (e.g. TOAST damage) | **0** |
-| `unknown_*` | commit outcome unknown to the client (connection died around COMMIT): present or absent are BOTH fine | any |
-| `lost_sample` | sample of lost keys (worker, seq) | empty |
-| `table_missing` | the ledger table does not exist | false |
-| `ok` | true only if lost = corrupt = unreadable = 0 and the table exists | **true** |
+| `unrecorded_rows_in_db` | rows never acked: commit outcome unknown to the client (connection died around COMMIT): present or absent are BOTH fine | any |
+| `lost_sample` | sample of lost keys (id) | empty |
+| `error` | `table entries does not exist`, `database unavailable: ...` or `query failed: ...` (no counts then) | absent |
+| `ok` | true only if lost = corrupt = unreadable = 0 and there is no `error` | **true** |
 Unlisted fields: report them verbatim. Rows present but never acked are fine (in-flight commits).
 
 ## 3. Playbooks
-**table_missing: true** -> skill pitr-restore (find the DROP, xid target, restore through a clone).
+**error: table entries does not exist** -> skill pitr-restore (find the DROP, xid target, restore through a clone).
 
 **corrupt > 0 or unreadable > 0** -> skill toast-corruption (bad-row list, repair from a PITR clone).
 
 **lost > 0**
-1. Localise in time: for some keys from `lost_sample`, look at neighbours that exist:
-   `psql -X -d ledger -c "SELECT worker, seq, created_at FROM public.ledger WHERE worker = <W> AND seq BETWEEN <S>-5 AND <S>+5 ORDER BY seq"`
+1. Localise in time: for some keys from `lost_sample`, take the ack time `t` (epoch) from the client ledger
+   (`grep -F '"id":<ID>,' /var/lib/arena/ledger.jsonl`) and look at neighbours that exist:
+   `psql -X -d ledger -c "SELECT id, created_at FROM public.entries WHERE created_at BETWEEN to_timestamp(<T>-5) AND to_timestamp(<T>+5) ORDER BY created_at"`
    The created_at of the rows around the gap gives the loss window.
 2. Explain the window - typical causes:
    - a restore whose target was too early (time target taken from the DROP statement START): redo with
@@ -56,10 +57,10 @@ Unlisted fields: report them verbatim. Rows present but never acked are fine (in
      sudo -n -u postgres ls /var/lib/postgresql/wal_archive | grep -E '^[0-9A-F]{24}$' | sort | while read -r f; do n=$(( 16#${f:8:8} * 256 + 16#${f:16:8} )); if [ -n "${p:-}" ] && [ "${f:0:8}" = "${p:0:8}" ] && [ "$n" -ne $((pn + 1)) ]; then echo "GAP: $p -> $f"; fi; p=$f; pn=$n; done
      ```
 3. Recover the missing keys from a PITR clone (target just before the destructive event, or latest
-   for physical damage): export them with `\copy (SELECT * FROM public.ledger WHERE (worker, seq) IN (...)) TO '/var/lib/raiden/work/missing.csv' WITH (FORMAT csv)`,
+   for physical damage): export them with `\copy (SELECT * FROM public.entries WHERE id IN (...)) TO '/var/lib/raiden/work/missing.csv' WITH (FORMAT csv)`,
    then in production inside one transaction:
-   `CREATE TEMP TABLE m (LIKE public.ledger); \copy m FROM '/var/lib/raiden/work/missing.csv' WITH (FORMAT csv)`
-   and `INSERT INTO public.ledger SELECT * FROM m ON CONFLICT (worker, seq) DO NOTHING;`
+   `CREATE TEMP TABLE m (LIKE public.entries); \copy m FROM '/var/lib/raiden/work/missing.csv' WITH (FORMAT csv)`
+   and `INSERT INTO public.entries SELECT * FROM m ON CONFLICT (id) DO NOTHING;`
 4. Re-run the oracle. If keys cannot be found in any clone: escalate with the key list and window
    (`/var/lib/raiden/escalations/$RAIDEN_INCIDENT_ID.md`).
 

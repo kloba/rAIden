@@ -1,0 +1,26 @@
+{
+  "incident": "inc-20261021T005104-7d61",
+  "finished_at": "2026-10-21T00:57:13.104Z",
+  "resolution": "resolved",
+  "summary": "Installed and proved ledger extension allowlist: CREATE EXTENSION pg_surgery now fails, including postgres role. Added validated extension drift patrol and learned runbook; all 12 checks healthy and oracle confirms 16,654 acknowledged commits intact. No PostgreSQL restart or durability changes.",
+  "turns": 17,
+  "tool_calls": 27,
+  "denied_calls": 0,
+  "total_cost_usd": 0.0,
+  "changes": [
+    {
+      "path": "/opt/raiden/.claude/skills/learned-extension-guard/SKILL.md",
+      "action": "added"
+    },
+    {
+      "path": "/opt/raiden/checks.d/87-extension-guard.sh",
+      "action": "added"
+    }
+  ],
+  "duration_s": 153.1,
+  "usage": {
+    "prompt_tokens": 400118,
+    "completion_tokens": 6001,
+    "cached_tokens": 373217
+  }
+}

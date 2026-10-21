@@ -16,8 +16,19 @@ CASES = [
     ("invalid page in block 7 of relation base/16384/16385", "ERROR", "XX001", "", "corruption", 100),
     ("statement: DROP TABLE public.entries", "LOG", "", "arena", "destructive_ddl", 100),
     ("statement: TRUNCATE entries", "LOG", "", "arena", "destructive_ddl", 100),
+    ("statement: DROP TABLE IF EXISTS public.scratch_lock_probe", "LOG", "", "raiden", "", 0),  # the agent's own scratch clean-up
+    ("statement: DROP TABLE public.pitr_entries", "LOG", "", "raiden", "", 0),
+    ("statement: DROP TABLE public.scratch_x", "LOG", "", "arena", "destructive_ddl", 100),  # anybody else's still pages
+    ("statement: DROP TABLE public.entries", "LOG", "", "raiden", "destructive_ddl", 100),  # and so does the agent's own real DROP
     ("could not extend file \"base/1/2\": No space left on device", "ERROR", "53100", "", "resource", 60),
     ("archive command failed with exit code 1", "LOG", "", "", "archive_failure", 60),
+    ("process 4242 still waiting for RowExclusiveLock on relation 16431 of database 16430 after 1000.115 ms", "LOG", "", "arena", "lock_queue", 60),
+    ("process 4242 still waiting for AccessExclusiveLock on relation 16431 of database 16430 after 1000.087 ms", "LOG", "", "migrator", "lock_queue", 60),
+    ("process 4242 still waiting for ShareLock on transaction 9001 after 1000.050 ms", "LOG", "", "arena", "", 0),  # row-level waits are ordinary OLTP
+    ("process 4242 acquired RowExclusiveLock on relation 16431 of database 16430 after 61234.567 ms", "LOG", "", "arena", "", 0),
+    ("process 4242 still waiting for RowExclusiveLock on relation 16431 of database 16430 after 1000.115 ms", "LOG", "", "raiden", "", 0),  # the agent's own waits never wake the agent
+    ("sorry, too many clients already", "FATAL", "53300", "", "resource", 60),
+    ('too many connections for role "reporting"', "FATAL", "53300", "reporting", "role_limit", 5),  # a capped role, the server has free slots
     ("database is not accepting commands that assign new transaction IDs to avoid wraparound data loss", "ERROR", "54000", "", "wraparound", 100),
     ("terminating connection due to administrator command", "FATAL", "57P01", "", "fatal_admin", 5),
     ("the database system is in recovery mode", "FATAL", "57P03", "", "recovery_mode", 3),

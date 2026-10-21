@@ -1,0 +1,16 @@
+[Unit]
+Description=rAIden streaming replica of postgresql@18-main (same host, port 5434; built by the fortify session)
+After=postgresql@18-main.service
+
+[Service]
+Type=simple
+User=raiden
+Group=raiden
+ExecStart=/usr/lib/postgresql/18/bin/postgres -D /var/lib/raiden/work/replica
+ExecReload=/bin/kill -HUP $MAINPID
+KillMode=mixed
+KillSignal=SIGINT
+TimeoutStopSec=60
+Restart=on-failure
+RestartSec=5
+UMask=0077

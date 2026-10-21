@@ -1,6 +1,6 @@
 ---
 name: hardening-after-incident
-description: Close-out and level-up after an incident is stable. PART A (inside the incident session) - write $RAIDEN_INCIDENT_DIR/report.md with the fixed template, append 1-3 lessons to /var/lib/raiden/memory/lessons.md, final RESOLUTION/SUMMARY lines. PART B (separate "evolve" session after the incident closes) - add durable protections (new patrol check, learned skill, skill pitfall update, safe config hardening), validate each, log them in /var/lib/raiden/memory/evolution.md.
+description: "Close-out and level-up after an incident is stable. PART A (inside the incident session) - write $RAIDEN_INCIDENT_DIR/report.md with the fixed template (including Key commands), append 1-3 lessons to /var/lib/raiden/memory/lessons.md, final RESOLUTION/SUMMARY lines. PART B (separate evolve session after the incident closes) - first a PREVENTIVE protection that makes the same attack bounce (skill preventive-protections), then a patrol check, a learned skill, safe config hardening; validate each and log them in /var/lib/raiden/memory/evolution.md ending with a PROTECTION line."
 ---
 
 # hardening-after-incident
@@ -16,6 +16,13 @@ description: Close-out and level-up after an incident is stable. PART A (inside 
 What users/data were affected, how long; downtime; data at risk; reconcile result.
 ## Root cause
 The evidence chain (log lines, settings with sourcefile:line, process names), not guesses.
+## Key commands
+```text
+8-12 lines, in the order you ran them, copied from your own tool calls (shorten long arguments with "...", never invent
+or reorder): the 3-5 read-only commands that FOUND the cause, then EVERY command that changed something (config edit, reload or
+restart, terminate, SQL write). The last lines are the fix and the restart/reload that applied it. Verification commands
+belong in the Verification section, not here.
+```
 ## What I did
 Only the commands that mattered, in order, each with its result.
 ## Verification
@@ -38,9 +45,15 @@ resolved = cause removed and verified (reconcile ok if data could be affected); 
 stopped, cause or verification open; escalated = /var/lib/raiden/escalations/$RAIDEN_INCIDENT_ID.md written.
 
 ## PART B - evolve session (after the incident closed)
-Inputs: the incident's report.md and notes.md, lessons.md, evolution.md (what exists already),
-`ls /opt/raiden/checks.d /opt/raiden/.claude/skills`. Ask: what would have PREVENTED this, DETECTED it
-earlier, or made the fix FASTER next time? Implement the 1-3 cheapest high-value artifacts:
+Inputs: the incident's report.md and notes.md, lessons.md, evolution.md and protections.list (what exists already),
+`ls /opt/raiden/checks.d /opt/raiden/.claude/skills`. Ask: what would have BLOCKED this, DETECTED it
+earlier, or made the fix FASTER next time? Implement, in this order:
+
+### B0. A PREVENTIVE PROTECTION (the most valuable result: the same move bounces next time)
+Load the skill `preventive-protections`, pick the entry that matches the ROOT CAUSE (pin shared_preload_libraries, extension
+allowlist, protected tables, role limits), apply it, PROVE it with the dry-run script it names (never against real data), append
+the line to /var/lib/raiden/memory/protections.list, and make sure `bash /opt/raiden/checks.d/90-protections.sh` says OK.
+Then the cheapest high-value artifacts below:
 
 ### B1. Patrol check `/opt/raiden/checks.d/NN-<name>.sh` (typical: preload-library allowlist + unknown
 background-worker detector, config drift vs a stored checksum baseline, crash counter, amcheck sample, restore drill)
@@ -91,8 +104,10 @@ Restart-only settings: list as a follow-up, do not restart for hardening.
 
 ### B5. Record: append one paragraph to /var/lib/raiden/memory/evolution.md
 `## <UTC date> after incident <id>` + what was added (full paths), what each protects against, how it was
-validated (exit codes/outputs), and what was considered but not done (and why).
+validated (exit codes/outputs), and what was considered but not done (and why). The LAST line of the paragraph is
+`PROTECTION: <what now bounces, at most 90 characters>` (or `PROTECTION: none - <why>`).
 
 ### Forbidden in PART B
 Editing /opt/raiden/raiden/** or /etc/raiden/**, deleting anything, weakening durability, restarting
-PostgreSQL, raising thresholds or disabling checks to silence a real alert, network installs.
+PostgreSQL, raising thresholds or disabling checks to silence a real alert, network installs, dropping or disabling
+a protection (event triggers raiden_*, allow_alter_system = off).

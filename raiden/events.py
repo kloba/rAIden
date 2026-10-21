@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 import threading
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 
 def utcnow_iso() -> str:
@@ -34,8 +35,18 @@ class JsonlLog:
 
 
 class EventLog(JsonlLog):
+    def __init__(self, path: Path) -> None:
+        super().__init__(path)
+        self.listeners: list[Callable[[dict[str, Any]], None]] = []  # e.g. the console link
+
     def emit(self, type_: str, **fields: Any) -> dict[str, Any]:
-        return self.write({"t": utcnow_iso(), "type": type_, **fields})
+        record = self.write({"t": utcnow_iso(), "type": type_, **fields})
+        for listener in self.listeners:
+            try:
+                listener(record)
+            except Exception:  # a listener must never break the event log
+                logging.getLogger("raiden").debug("event listener failed", exc_info=True)
+        return record
 
 
 class AuditLog(JsonlLog):

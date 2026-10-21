@@ -1,0 +1,26 @@
+{
+  "incident": "inc-20261021T011631-7c80",
+  "finished_at": "2026-10-21T01:25:03.723Z",
+  "resolution": "resolved",
+  "summary": "Registered P5 and proved equivalent fresh-logins cancel migrator LOCK after 3.001s and expire idle analyst transactions at 15s. Added validated lock-chain/default-drift patrol and learned-lock-queue runbook; all 15 checks OK, oracle verified 56,780 acknowledged commits intact. No restart, authentication change or durability weakening.",
+  "turns": 23,
+  "tool_calls": 33,
+  "denied_calls": 0,
+  "total_cost_usd": 0.0,
+  "changes": [
+    {
+      "path": "/opt/raiden/.claude/skills/learned-lock-queue/SKILL.md",
+      "action": "added"
+    },
+    {
+      "path": "/opt/raiden/checks.d/89-lock-queue.sh",
+      "action": "added"
+    }
+  ],
+  "duration_s": 240.7,
+  "usage": {
+    "prompt_tokens": 637345,
+    "completion_tokens": 7828,
+    "cached_tokens": 605864
+  }
+}

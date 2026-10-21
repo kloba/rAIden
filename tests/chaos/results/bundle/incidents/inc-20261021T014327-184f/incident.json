@@ -1,0 +1,36 @@
+{
+  "id": "inc-20261021T014327-184f",
+  "opened_at": "2026-10-21T01:43:17.744Z",
+  "dispatched_at": "2026-10-21T01:43:27.052Z",
+  "reason": "critical event: lock_queue x6, error x1",
+  "signatures": [
+    "error:55P03:canceling statement due to lock timeout",
+    "lock_queue:LOG:process N still waiting for AccessExclusiveLock on relation N of database N after N.N ms",
+    "lock_queue:LOG:process N still waiting for AccessShareLock on relation N of database N after N.N ms",
+    "lock_queue:LOG:process N still waiting for RowExclusiveLock on relation N of database N after N.N ms"
+  ],
+  "kinds": {
+    "lock_queue": 6,
+    "error": 1
+  },
+  "events_count": 7,
+  "critical": true,
+  "recurrence_of": null,
+  "model": "gpt-6.1-sol",
+  "finished_at": "2026-10-21T01:46:33.716Z",
+  "outcome": "resolved",
+  "summary": "Existing 3s migrator lock timeout drained five production waiters; analyst client then disconnected, removing root blocker. No database intervention or restart needed. No recurrence for over two minutes; oracle verified all 91,540 acknowledged commits with zero loss, corruption or unreadable rows. Report and lesson recorded.",
+  "session_id": "inc-20261021T014327-184f",
+  "num_turns": 12,
+  "duration_ms": 186655,
+  "total_cost_usd": 0.0,
+  "tool_calls": 19,
+  "denied_calls": 0,
+  "report_path": "/var/lib/raiden/incidents/inc-20261021T014327-184f/report.md",
+  "error": null,
+  "usage": {
+    "prompt_tokens": 268245,
+    "completion_tokens": 3493,
+    "cached_tokens": 238713
+  }
+}

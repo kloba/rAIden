@@ -1,0 +1,32 @@
+{
+  "id": "inc-20261021T013448-3b98",
+  "opened_at": "2026-10-21T01:34:41.975Z",
+  "dispatched_at": "2026-10-21T01:34:48.529Z",
+  "reason": "critical event: destructive_ddl x1",
+  "signatures": [
+    "destructive_ddl:LOG:statement: DROP TABLE public.entries"
+  ],
+  "kinds": {
+    "destructive_ddl": 1
+  },
+  "events_count": 1,
+  "critical": true,
+  "recurrence_of": null,
+  "model": "gpt-6.1-sol",
+  "finished_at": "2026-10-21T01:36:04.011Z",
+  "outcome": "resolved",
+  "summary": "Existing protected-table guard rejected arena DROP in 3ms. Table and protections intact; all 74,948 acknowledged commits verified with zero loss, corruption or unreadable rows. No database changes or restart needed.",
+  "session_id": "inc-20261021T013448-3b98",
+  "num_turns": 10,
+  "duration_ms": 75474,
+  "total_cost_usd": 0.0,
+  "tool_calls": 17,
+  "denied_calls": 0,
+  "report_path": "/var/lib/raiden/incidents/inc-20261021T013448-3b98/report.md",
+  "error": null,
+  "usage": {
+    "prompt_tokens": 172920,
+    "completion_tokens": 2600,
+    "cached_tokens": 150679
+  }
+}

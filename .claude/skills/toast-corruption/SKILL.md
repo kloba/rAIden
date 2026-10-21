@@ -22,13 +22,13 @@ psql -X -At -d ledger -c "SELECT pg_filenode_relation(0, <filenode>)::regclass" 
 ## 2. Scope: list every damaged row (save the lists in the incident dir)
 ```bash
 psql -X -At -d ledger -c "CREATE EXTENSION IF NOT EXISTS amcheck"
-psql -X -At -d ledger -c "SELECT blkno, offnum, attnum, msg FROM verify_heapam('public.ledger', check_toast => true) LIMIT 50"
-psql -X -At -d ledger -c "SELECT worker, seq FROM public.ledger WHERE ctid = ANY (ARRAY(SELECT format('(%s,%s)', blkno, offnum)::tid FROM verify_heapam('public.ledger', check_toast => true)))"
+psql -X -At -d ledger -c "SELECT blkno, offnum, attnum, msg FROM verify_heapam('public.entries', check_toast => true) LIMIT 50"
+psql -X -At -d ledger -c "SELECT id FROM public.entries WHERE ctid = ANY (ARRAY(SELECT format('(%s,%s)', blkno, offnum)::tid FROM verify_heapam('public.entries', check_toast => true)))"
 pg_amcheck -d ledger --heapallindexed --install-missing --progress 2>&1 | tail -20     # whole DB incl. indexes and TOAST
 psql -X -q -d ledger -v ON_ERROR_STOP=1 -f /opt/raiden/.claude/skills/toast-corruption/scripts/find_bad_rows.sql > "$RAIDEN_INCIDENT_DIR/bad_rows.csv"
 ```
 find_bad_rows.sql fully detoasts every payload (md5) inside exception blocks, probing 200 heap blocks at a
-time (`-v blocks=N`); output CSV `worker,seq,ctid,err`. A row with empty worker/seq = whole heap block
+time (`-v blocks=N`); output CSV `id,ctid,err`. A row with empty id = whole heap block
 unreadable (keys must then come from the clone: same ctid block there, PITR is physical).
 
 ## 3. Source of good data: a PITR clone (skill pitr-restore, never production)
@@ -44,9 +44,9 @@ unreadable (keys must then come from the clone: same ctid block there, PITR is p
 Export from the clone (`SOCK` = socket dir printed by pitr_clone.sh):
 ```bash
 psql -X -h "$SOCK" -p 5433 -d ledger -v ON_ERROR_STOP=1 <<EOF
-CREATE TEMP TABLE bad (worker int, seq bigint, ctid tid, err text);
+CREATE TEMP TABLE bad (id bigint, row_ctid tid, err text);
 \copy bad FROM '$RAIDEN_INCIDENT_DIR/bad_rows.csv' WITH (FORMAT csv, HEADER)
-\copy (SELECT l.worker, l.seq, l.payload FROM public.ledger l JOIN bad b USING (worker, seq)) TO '/var/lib/raiden/work/good_rows.csv' WITH (FORMAT csv)
+\copy (SELECT l.id, l.payload FROM public.entries l JOIN bad b USING (id)) TO '/var/lib/raiden/work/good_rows.csv' WITH (FORMAT csv)
 EOF
 wc -l /var/lib/raiden/work/good_rows.csv     # must equal the number of bad keys
 ```
@@ -54,9 +54,9 @@ Apply in ONE transaction, commit only if every key was updated:
 ```bash
 psql -X -d ledger -v ON_ERROR_STOP=1 <<'EOF'
 BEGIN;
-CREATE TEMP TABLE good (worker int, seq bigint, payload text) ON COMMIT DROP;
+CREATE TEMP TABLE good (id bigint, payload text) ON COMMIT DROP;
 \copy good FROM '/var/lib/raiden/work/good_rows.csv' WITH (FORMAT csv)
-WITH u AS (UPDATE public.ledger l SET payload = g.payload FROM good g WHERE l.worker = g.worker AND l.seq = g.seq RETURNING 1) SELECT count(*) AS updated FROM u \gset
+WITH u AS (UPDATE public.entries l SET payload = g.payload FROM good g WHERE l.id = g.id RETURNING 1) SELECT count(*) AS updated FROM u \gset
 SELECT :updated = (SELECT count(*) FROM good) AND :updated > 0 AS all_ok \gset
 \echo updated :updated all_ok :all_ok
 \if :all_ok
@@ -67,7 +67,7 @@ ROLLBACK;
 EOF
 ```
 Unreadable heap blocks: get the keys in that block from the clone
-(`SELECT worker, seq FROM public.ledger WHERE ctid >= '(B,0)' AND ctid < '(B+1,0)'`) and escalate - do not
+(`SELECT id FROM public.entries WHERE ctid >= '(B,0)' AND ctid < '(B+1,0)'`) and escalate - do not
 rewrite pages yourself.
 
 ## 5. Verify
@@ -77,8 +77,8 @@ rewrite pages yourself.
 - Stop and remove the clone with pitr_cleanup.sh; keep bad_rows.csv in the incident dir.
 
 ## 6. No good copy exists
-Quarantine, do not drop: copy the readable columns and the error text to `public.ledger_quarantine`
-(`CREATE TABLE public.ledger_quarantine AS SELECT worker, seq, account, amount, created_at, now() AS quarantined_at FROM public.ledger WHERE (worker, seq) IN (...)`),
+Quarantine, do not drop: copy the readable columns and the error text to `public.entries_quarantine`
+(`CREATE TABLE public.entries_quarantine AS SELECT id, account, amount, payload_md5, created_at, now() AS quarantined_at FROM public.entries WHERE id IN (...)`),
 leave the original rows in place, write `/var/lib/raiden/escalations/$RAIDEN_INCIDENT_ID.md` with the key list and evidence.
 
 ## 7. Root cause (put in report)

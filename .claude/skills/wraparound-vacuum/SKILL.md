@@ -45,7 +45,7 @@ Fix the blocker first (log each action in notes.md):
 Manual VACUUM is unthrottled by default (vacuum_cost_delay = 0). Oldest tables first, in the database
 that owns them; run long ones in the background and watch pg_stat_progress_vacuum:
 ```bash
-nohup psql -X -d ledger -c "SET statement_timeout = 0" -c "VACUUM (FREEZE, VERBOSE) public.ledger" > /var/lib/raiden/work/vacuum-ledger.log 2>&1 &
+nohup psql -X -d ledger -c "SET statement_timeout = 0" -c "VACUUM (FREEZE, VERBOSE) public.entries" > /var/lib/raiden/work/vacuum-ledger.log 2>&1 &
 # near/after the stop limit, faster: VACUUM (FREEZE, VERBOSE, INDEX_CLEANUP OFF) <table>
 ```
 Then advance datfrozenxid for the whole database: `psql -X -d <db> -c "SET statement_timeout = 0" -c "VACUUM (FREEZE)"`
@@ -60,7 +60,7 @@ Revert both (`ALTER SYSTEM RESET ...; SELECT pg_reload_conf();`) after the age i
 ## 4. Verify
 `age(datfrozenxid)` per database drops (typically to < vacuum_freeze_table_age, 150M); no new
 `must be vacuumed within` / 54000 lines; a write works:
-`psql -X -At -d ledger -c "SELECT max(created_at) FROM public.ledger"` keeps advancing.
+`psql -X -At -d ledger -c "SELECT max(created_at) FROM public.entries"` keeps advancing.
 
 ## Escalation only
 Single-user mode (`postgres --single`) requires stopping the server and is NOT allowed for the agent.

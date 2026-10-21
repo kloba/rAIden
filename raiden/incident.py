@@ -40,12 +40,19 @@ CORRUPTION_RE = re.compile(
     re.I,
 )
 DESTRUCTIVE_RE = re.compile(r"^\s*(statement:\s*)?(drop\s+(table|database|schema)|truncate)\b", re.I)
+# the agent's own clean-up of a scratch table (the guard allows exactly these prefixes): its proofs must not page the agent
+SCRATCH_DROP_RE = re.compile(r"^\s*(statement:\s*)?drop\s+table\s+(if\s+exists\s+)?(\w+\.)?(tmp|temp|scratch|restore|restored|quarantine|pitr)_", re.I)
 RESOURCE_RE = re.compile(
     r"No space left on device|could not extend file|out of memory|too many clients already|"
     r"remaining connection slots are reserved|could not write to file",
     re.I,
 )
 WRAP_RE = re.compile(r"database is not accepting commands|must be vacuumed within|wraparound", re.I)
+# log_lock_waits: a backend waited longer than deadlock_timeout for a TABLE-level lock. Row/transaction lock waits are
+# ordinary OLTP; waiting for a relation lock means DDL or LOCK TABLE and, behind it, a queue of everybody else.
+# a role that hit its own CONNECTION LIMIT: that is a protection doing its job (the server itself still has free slots)
+ROLE_LIMIT_RE = re.compile(r'too many connections for role "', re.I)
+LOCK_QUEUE_RE = re.compile(r"process \d+ still waiting for \w+ on relation ", re.I)
 ARCHIVE_RE = re.compile(r"archive command (failed|was terminated)", re.I)
 RECOVERY_MODE_RE = re.compile(r"the database system is (in recovery mode|starting up|shutting down)", re.I)
 ADMIN_SHUTDOWN_RE = re.compile(r"terminating connection due to administrator command", re.I)
@@ -140,14 +147,18 @@ def classify(ev: LogEvent) -> LogEvent:
         kind, weight = "crash", 100
     elif st in ("XX001", "XX002") or CORRUPTION_RE.search(msg):
         kind, weight = "corruption", 100
-    elif sev == "LOG" and DESTRUCTIVE_RE.search(text_for_ddl):
+    elif sev == "LOG" and DESTRUCTIVE_RE.search(text_for_ddl) and not (own and SCRATCH_DROP_RE.search(text_for_ddl)):
         kind, weight = "destructive_ddl", 100
     elif WRAP_RE.search(msg):
         kind, weight = "wraparound", 100
+    elif ROLE_LIMIT_RE.search(msg):
+        kind, weight = "role_limit", 5
     elif RESOURCE_RE.search(msg) or st.startswith("53"):
         kind, weight = "resource", 60
     elif ARCHIVE_RE.search(msg):
         kind, weight = "archive_failure", 60
+    elif sev == "LOG" and LOCK_QUEUE_RE.search(msg):
+        kind, weight = "lock_queue", 60
     elif ADMIN_SHUTDOWN_RE.search(msg) or st == "57P01":
         kind, weight = "fatal_admin", 5
     elif RECOVERY_MODE_RE.search(msg) or st == "57P03":
@@ -161,7 +172,7 @@ def classify(ev: LogEvent) -> LogEvent:
     elif sev in ("ERROR", "FATAL") and st[:2] not in IGNORED_CLASSES and not IGNORED_MESSAGES.search(msg):
         kind, weight = "error", 10
 
-    if own and kind in ("error", "fatal_admin", "recovery_mode", "missing_relation", "resource"):
+    if own and kind in ("error", "fatal_admin", "recovery_mode", "missing_relation", "resource", "lock_queue"):
         kind, weight = "", 0
     ev.kind, ev.weight = kind, weight
     ev.signature = f"{kind}:{st or sev}:{normalize(msg)}" if kind else ""

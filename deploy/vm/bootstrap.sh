@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Bootstrap the rAIden lab VM (Ubuntu 24.04): PostgreSQL 18 from PGDG, pg_crash (built, NOT enabled),
-# OS users, JSON logging, WAL archiving, a first base backup, and the rAIden runtime layout.
+# OS users, JSON logging, WAL archiving (no base backup yet), and the rAIden runtime layout.
 # Idempotent. Run as root on the VM:  sudo bash bootstrap.sh
 set -euo pipefail
 export DEBIAN_FRONTEND=noninteractive
@@ -26,6 +26,11 @@ apt-get install -y -q "postgresql-$PGV" "postgresql-client-$PGV" "postgresql-ser
 log "OS users and groups"
 id raiden >/dev/null 2>&1 || useradd -m -d /var/lib/raiden -s /bin/bash raiden
 id arena  >/dev/null 2>&1 || useradd -m -d /var/lib/arena  -s /bin/bash arena
+# the lab's troublemakers: OS accounts that map to login roles of the same name (peer authentication). The attacks in
+# tests/chaos/scenarios run as these, so what rAIden sees in the logs and in pg_stat_activity is a named role, like in real life
+for u in reporting analyst migrator; do
+  id "$u" >/dev/null 2>&1 || useradd -r -M -d /nonexistent -s /usr/sbin/nologin "$u"
+done
 usermod -aG postgres,adm,arena raiden
 chmod 750 /var/lib/arena
 install -d -o raiden -g raiden -m 750 /var/lib/raiden/{incidents,memory,escalations}
@@ -82,6 +87,11 @@ sudo -u postgres psql -X -v ON_ERROR_STOP=1 <<'SQL'
 DO $$ BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'raiden') THEN CREATE ROLE raiden LOGIN SUPERUSER; END IF;
   IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'arena')  THEN CREATE ROLE arena LOGIN; END IF;
+  -- reporting: a report job that leaks connections; analyst: an analyst's forgotten transaction; migrator: the deploy
+  -- tool that runs ALTER TABLE (it may, because it is a member of the table owner)
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'reporting') THEN CREATE ROLE reporting LOGIN; END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'analyst')   THEN CREATE ROLE analyst LOGIN; END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'migrator')  THEN CREATE ROLE migrator LOGIN IN ROLE arena; END IF;
 END $$;
 CREATE EXTENSION IF NOT EXISTS pg_stat_statements;
 SQL
@@ -100,6 +110,8 @@ cat > /etc/sudoers.d/raiden <<EOF
 Defaults:raiden !requiretty
 raiden ALL=(postgres) NOPASSWD: ALL
 raiden ALL=(root) NOPASSWD: /usr/bin/systemctl start postgresql@$PGV-main, /usr/bin/systemctl stop postgresql@$PGV-main, /usr/bin/systemctl restart postgresql@$PGV-main, /usr/bin/systemctl reload postgresql@$PGV-main, /usr/bin/systemctl status postgresql@$PGV-main, /usr/bin/systemctl status postgresql@$PGV-main *, /usr/bin/journalctl, /usr/bin/journalctl *, /usr/bin/dmesg, /usr/bin/dmesg *
+# the streaming replica that rAIden builds in its fortify session runs as its own unit (pg-standby.service)
+raiden ALL=(root) NOPASSWD: /usr/bin/systemctl start pg-standby, /usr/bin/systemctl stop pg-standby, /usr/bin/systemctl restart pg-standby, /usr/bin/systemctl reload pg-standby, /usr/bin/systemctl status pg-standby, /usr/bin/systemctl start pg-standby.service, /usr/bin/systemctl stop pg-standby.service, /usr/bin/systemctl restart pg-standby.service, /usr/bin/systemctl reload pg-standby.service, /usr/bin/systemctl status pg-standby.service
 EOF
 chmod 440 /etc/sudoers.d/raiden
 visudo -cf /etc/sudoers.d/raiden
@@ -124,12 +136,8 @@ fi
 /opt/raiden/venv/bin/pip install -q openai azure-identity "psycopg[binary]" PyYAML pytest
 /opt/raiden/venv/bin/pip list 2>/dev/null | grep -i -E "openai|azure-identity|psycopg|pyyaml|pytest"
 
-log "first base backup (plain format, WAL streamed) - the only backup, same VM"
-if [ -z "$(ls -A /var/backups/postgresql/base 2>/dev/null)" ]; then
-  dest="/var/backups/postgresql/base/$(date -u +%Y%m%dT%H%M%S)"
-  sudo -u postgres pg_basebackup -D "$dest" -Fp -X stream -c fast
-  ls "$dest" | head -5
-fi
+# Deliberately NO base backup here: the lab starts like many real servers (WAL archiving on, zero base backups,
+# so point-in-time recovery is impossible). rAIden's fortify session takes the first verified backup.
 sudo -u postgres psql -X -c "SELECT pg_switch_wal()" >/dev/null
 sleep 3
 sudo -u postgres psql -X -tAc "SELECT 'archived='||archived_count||' failed='||failed_count FROM pg_stat_archiver"

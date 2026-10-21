@@ -1,6 +1,0 @@
-# Deck build:  python3 -m venv .venv && .venv/bin/pip install -r talk/requirements.txt && .venv/bin/python talk/build.py
-# Headlines are drawn as vector glyph outlines so every PDF viewer renders them identically.
-fonttools>=4.50
-brotli>=1.1        # reads the vendored .woff2 fonts
-uharfbuzz>=0.40    # kerning (optional: without it headlines are spaced by plain advances)
-segno>=1.6         # only for talk/make_qr.py

@@ -68,7 +68,10 @@ def test_load_skill(box, cfg):
     (d / "SKILL.md").write_text("---\nname: demo\ndescription: d\n---\nbody")
     (d / "scripts" / "go.sh").write_text("echo")
     out = run(box, "load_skill", name="demo")
-    assert "body" in out and "go.sh" in out
+    assert "body" in out and "go.sh" in out and "reference files" not in out
+    (d / "references").mkdir()
+    (d / "references" / "notes.md").write_text("# ref")
+    assert str(d / "references" / "notes.md") in run(box, "load_skill", name="demo")
     assert "Available: demo" in run(box, "load_skill", name="nope")
     assert "invalid skill name" in run(box, "load_skill", name="../etc")
 

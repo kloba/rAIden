@@ -1,0 +1,26 @@
+{
+  "incident": "inc-20261021T015719-597d",
+  "finished_at": "2026-10-21T02:04:19.460Z",
+  "resolution": "resolved",
+  "summary": "Pinned approved preload so the exact pg_crash conf.d experiment loses; retained-copy attack and positive-control proof passed. Added validated planned/live/config/module patrol and learned-preload-guard runbook. No restart; all 118983 acknowledged commits intact. Full patrol retains historical crash CRIT, with zero new session crashes. Report, lessons and evolution recorded.",
+  "turns": 22,
+  "tool_calls": 32,
+  "denied_calls": 0,
+  "total_cost_usd": 0.0,
+  "changes": [
+    {
+      "path": "/opt/raiden/.claude/skills/learned-preload-guard/SKILL.md",
+      "action": "added"
+    },
+    {
+      "path": "/opt/raiden/checks.d/89-preload-guard.sh",
+      "action": "added"
+    }
+  ],
+  "duration_s": 206.9,
+  "usage": {
+    "prompt_tokens": 604712,
+    "completion_tokens": 8007,
+    "cached_tokens": 572706
+  }
+}

@@ -45,6 +45,10 @@ DENY_ANY: list[tuple[str, re.Pattern[str], str]] = [
     ("no-pg-program", re.compile(r"\b(?:to|from)\s+program\b", re.I), "COPY ... PROGRAM executes shell commands"),
     ("no-self-harm", re.compile(r"\b(?:alter|drop)\s+(?:role|user)\s+\"?raiden\b", re.I), "do not touch the agent's own database role"),
     ("no-psql-shell", re.compile(r"(?:^|[\s\"';])\\!"), "psql's \\! runs shell commands outside the guardrails"),
+    ("protection-tamper", re.compile(
+        r"\b(?:drop|alter)\s+event\s+trigger\s+(?:if\s+exists\s+)?\"?raiden_|\bevent_triggers\s*(?:=|\s+to)\s*['\"]?(?:off|false|0)\b|"
+        r"\ballow_alter_system\s*(?:=|\s+to|\s)\s*['\"]?(?:on|true|1)\b", re.I),
+     "protections that rAIden installed (event triggers, allow_alter_system = off) may not be removed or switched off by rAIden; escalate if one blocks legitimate work"),
 ]
 
 # ---- program rules: matched against the command word (basename) -------------------------------------------
@@ -737,7 +741,8 @@ class Guard:
             i += 1
         if verb in (None, "status", "reload"):
             return ALLOW  # read-only or equivalent to systemctl reload
-        generic = f"on the production cluster pg_ctl is only allowed as: sudo -n -u postgres pg_ctl -D {self.cfg.pgdata} stop -m immediate, and only for a HUNG shutdown (skill stuck-shutdown); otherwise use systemctl"
+        generic = (f"on the production cluster pg_ctl is only allowed as: sudo -n -u postgres pg_ctl -D {self.cfg.pgdata} stop -m immediate, and only for a HUNG shutdown (skill stuck-shutdown); "
+                   f"otherwise use systemctl (the replica is controlled with: sudo -n systemctl start|stop|restart {self.cfg.standby_service})")
         if verb != "stop" or mode not in ("immediate", "i") or not datadir or os.path.normpath(datadir) != str(self.cfg.pgdata) or not (used_sudo and sudo_user == "postgres"):
             return deny("pg-ctl-prod", generic)
         state, age = self._unit_state()
@@ -847,8 +852,11 @@ class Guard:
             return deny("self-preservation", "the agent may not control its own service")
         if verb not in ("start", "stop", "restart", "reload", "try-restart", "reload-or-restart"):
             return deny("systemctl-verb", f"systemctl {verb} is not allowed")
+        standby = {self.cfg.standby_service, self.cfg.standby_service + ".service"}
+        if units and all(u in standby for u in units):
+            return ALLOW  # the streaming replica is not the primary: no restart budget
         if units != [self.cfg.pg_service]:
-            return deny("systemctl-unit", f"only the {self.cfg.pg_service} unit may be controlled")
+            return deny("systemctl-unit", f"only the {self.cfg.pg_service} unit (and the {self.cfg.standby_service} replica) may be controlled")
         if verb == "reload":
             return ALLOW
         if self.restarts_left() <= 0:

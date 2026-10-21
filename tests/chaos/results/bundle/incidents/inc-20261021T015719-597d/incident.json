@@ -1,0 +1,35 @@
+{
+  "id": "inc-20261021T015719-597d",
+  "opened_at": "2026-10-21T01:57:13.425Z",
+  "dispatched_at": "2026-10-21T01:57:19.927Z",
+  "reason": "critical event: crash x4",
+  "signatures": [
+    "crash:LOG:all server processes terminated; reinitializing",
+    "crash:LOG:background worker \"logical replication launcher\" (PID N) was terminated by signal 9: Killed",
+    "crash:LOG:database system was not properly shut down; automatic recovery in progress",
+    "crash:LOG:terminating any other active server processes"
+  ],
+  "kinds": {
+    "crash": 4
+  },
+  "events_count": 4,
+  "critical": true,
+  "recurrence_of": null,
+  "model": "gpt-6.1-sol",
+  "finished_at": "2026-10-21T02:00:07.392Z",
+  "outcome": "resolved",
+  "summary": "Removed pg_crash from its conf.d source with one readiness-gated restart. Verified 60 seconds without new crashes, intact protections and streaming replica, and all 112720 acknowledged commits present with zero loss or corruption.",
+  "session_id": "inc-20261021T015719-597d",
+  "num_turns": 15,
+  "duration_ms": 167456,
+  "total_cost_usd": 0.0,
+  "tool_calls": 23,
+  "denied_calls": 0,
+  "report_path": "/var/lib/raiden/incidents/inc-20261021T015719-597d/report.md",
+  "error": null,
+  "usage": {
+    "prompt_tokens": 325866,
+    "completion_tokens": 3864,
+    "cached_tokens": 299686
+  }
+}

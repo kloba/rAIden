@@ -1,0 +1,32 @@
+{
+  "id": "inc-20261021T010712-42b2",
+  "opened_at": "2026-10-21T01:07:02.080Z",
+  "dispatched_at": "2026-10-21T01:07:12.848Z",
+  "reason": "critical event: resource x2",
+  "signatures": [
+    "resource:53300:remaining connection slots are reserved for roles with the SUPERUSER attribute"
+  ],
+  "kinds": {
+    "resource": 2
+  },
+  "events_count": 2,
+  "critical": true,
+  "recurrence_of": null,
+  "model": "gpt-6.1-sol",
+  "finished_at": "2026-10-21T01:11:12.359Z",
+  "outcome": "resolved",
+  "summary": "Capped unlimited reporting fan-out at 10 connections with idle timeouts and disconnected 92 idle reporting clients. No new connection-exhaustion errors for over two minutes; application writes recovered without restart. Oracle verified all 35,595 acknowledged commits intact; report and lesson saved.",
+  "session_id": "inc-20261021T010712-42b2",
+  "num_turns": 16,
+  "duration_ms": 239504,
+  "total_cost_usd": 0.0,
+  "tool_calls": 25,
+  "denied_calls": 0,
+  "report_path": "/var/lib/raiden/incidents/inc-20261021T010712-42b2/report.md",
+  "error": null,
+  "usage": {
+    "prompt_tokens": 330218,
+    "completion_tokens": 4421,
+    "cached_tokens": 302850
+  }
+}

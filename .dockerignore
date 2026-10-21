@@ -1,0 +1,14 @@
+.git
+.venv
+venv
+**/__pycache__
+**/*.pyc
+.pytest_cache
+.ruff_cache
+web/node_modules
+web/dist
+raiden/console/static
+tests/chaos/results
+deploy/azure/state.env
+*.env
+docs/screenshots

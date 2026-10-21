@@ -10,18 +10,18 @@ def guard(cfg):
 
 
 def _cases(cfg):
-    return selftest.cases(str(cfg.state_dir), str(cfg.workdir), str(cfg.pgdata))
+    return selftest.cases(str(cfg.state_dir), str(cfg.workdir), str(cfg.pgdata), str(cfg.pg_conf_dir))
 
 
 def test_matrix(cfg, guard):
-    results = selftest.run(guard, str(cfg.state_dir), str(cfg.workdir), str(cfg.pgdata))
+    results = selftest.run(guard, str(cfg.state_dir), str(cfg.workdir), str(cfg.pgdata), str(cfg.pg_conf_dir))
     failures = [f"{c.name}: want {'allow' if c.allow else 'deny[' + c.rule + ']'}, got {'allow' if d.allow else 'deny[' + d.rule + ']'}" for c, d, ok in results if not ok]
     assert not failures, "\n".join(failures)
     assert len(results) >= 80
 
 
 def test_every_deny_has_a_reason(cfg, guard):
-    for c, d, _ in selftest.run(guard, str(cfg.state_dir), str(cfg.workdir), str(cfg.pgdata)):
+    for c, d, _ in selftest.run(guard, str(cfg.state_dir), str(cfg.workdir), str(cfg.pgdata), str(cfg.pg_conf_dir)):
         if not d.allow:
             assert d.rule and d.reason, c.name
 
