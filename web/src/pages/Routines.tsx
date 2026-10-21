@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Bot, CalendarClock, ListChecks, Play, Plus, Trash2 } from "lucide-react";
+import { Bot, CalendarClock, ListChecks, MoonStar, Play, Plus, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Link } from "react-router";
 import {
@@ -13,8 +13,10 @@ import type { Env, Finding, Routine, RoutineRun } from "../lib/types";
 const RUN_TONE: Record<string, string> = { ok: "var(--ok)", warn: "var(--warn)", crit: "var(--crit)", error: "var(--crit)", running: "var(--arc)" };
 const RUN_LABEL: Record<string, string> = { ok: "All clear", warn: "Findings", crit: "Critical findings", error: "Failed", running: "Running" };
 const ON_FINDING: Record<string, string> = { suggest: "Findings become suggestions on the server", incident: "Critical findings open an incident", report: "Writes a report" };
+const KIND_LABEL: Record<Routine["kind"], string> = { agent: "AI review", check: "Checks", dream: "Learning" };
 
 function scopeText(r: Routine) {
+  if (r.kind === "dream") return "The whole fleet";
   const envs = r.scope.environments ?? [];
   const servers = r.scope.servers ?? [];
   if (servers.length) return `${servers.length} server${servers.length > 1 ? "s" : ""}`;
@@ -91,7 +93,7 @@ const CHECK_OPTIONS: { id: string; label: string }[] = [
   { id: "assessment", label: "The full assessment, with sizing" },
 ];
 
-interface Draft { id?: number; name: string; description: string; kind: "check" | "agent"; checks: string[]; prompt: string; cron: string; timezone: string; environments: Env[]; on_finding: string; enabled: boolean }
+interface Draft { id?: number; name: string; description: string; kind: Routine["kind"]; checks: string[]; prompt: string; cron: string; timezone: string; environments: Env[]; on_finding: string; enabled: boolean }
 const blank: Draft = { name: "", description: "", kind: "agent", checks: ["metrics"], prompt: "", cron: "0 7 * * *", timezone: "UTC", environments: [], on_finding: "suggest", enabled: true };
 
 function Editor({ draft, onClose }: { draft: Draft | null; onClose: () => void }) {
@@ -101,7 +103,8 @@ function Editor({ draft, onClose }: { draft: Draft | null; onClose: () => void }
   const toast = useToast();
   const save = useMutation({
     mutationFn: () => {
-      const body = { name: d.name, description: d.description, kind: d.kind, checks: d.kind === "check" ? d.checks : [], prompt: d.kind === "agent" ? d.prompt : "", cron: d.cron.trim(),
+      const body = d.kind === "dream" ? { name: d.name, description: d.description, cron: d.cron.trim(), timezone: d.timezone, enabled: d.enabled } : {
+        name: d.name, description: d.description, kind: d.kind, checks: d.kind === "check" ? d.checks : [], prompt: d.kind === "agent" ? d.prompt : "", cron: d.cron.trim(),
         timezone: d.timezone, scope: d.environments.length ? { environments: d.environments } : {}, on_finding: d.on_finding, enabled: d.enabled };
       return d.id ? api.patch(`/routines/${d.id}`, body) : api.post("/routines", body);
     },
@@ -127,10 +130,12 @@ function Editor({ draft, onClose }: { draft: Draft | null; onClose: () => void }
         )}
         <Field label="Name"><Input value={d.name} onChange={(e) => set({ name: e.target.value })} placeholder="Nightly connection review" /></Field>
         <Field label="Description"><Textarea rows={2} value={d.description} onChange={(e) => set({ description: e.target.value })} /></Field>
-        <Field label="Kind">
+        {d.kind !== "dream" && <Field label="Kind">
           <Segmented value={d.kind} onChange={(v) => set({ kind: v })} options={[{ id: "check", label: <span className="inline-flex items-center gap-1.5"><ListChecks className="size-3.5" />Checks (no tokens)</span> }, { id: "agent", label: <span className="inline-flex items-center gap-1.5"><Bot className="size-3.5" />AI review</span> }]} />
-        </Field>
-        {d.kind === "check" ? (
+        </Field>}
+        {d.kind === "dream" ? (
+          <div className="rounded-lg bg-surface-2 px-3 py-2 text-[12.5px] text-ink-2">The dream reads what people decided, wrote and said since the last one, for the whole fleet, and keeps what is worth keeping on the <Link to="/knowledge" className="font-semibold text-arc-ink hover:underline">Knowledge</Link> page. Only its schedule changes here.</div>
+        ) : d.kind === "check" ? (
           <Field label="What to check">
             <div className="space-y-1.5 rounded-lg border border-line p-2.5">
               {CHECK_OPTIONS.map((c) => (
@@ -151,7 +156,7 @@ function Editor({ draft, onClose }: { draft: Draft | null; onClose: () => void }
           <Field label="Schedule (cron)" hint="minute hour day-of-month month day-of-week, e.g. 0 7 * * 1-5"><Input value={d.cron} onChange={(e) => set({ cron: e.target.value })} className="font-mono" /></Field>
           <Field label="Time zone"><Input value={d.timezone} onChange={(e) => set({ timezone: e.target.value })} /></Field>
         </div>
-        <Field label="Servers">
+        {d.kind !== "dream" && <Field label="Servers">
           <div className="flex flex-wrap gap-3">
             {(["production", "staging", "development"] as Env[]).map((e) => (
               <label key={e} className="flex items-center gap-1.5 text-[13px]">
@@ -161,14 +166,14 @@ function Editor({ draft, onClose }: { draft: Draft | null; onClose: () => void }
             ))}
             <span className="text-[12px] text-ink-3">{d.environments.length ? "" : "None ticked: every server"}</span>
           </div>
-        </Field>
-        <Field label="When it finds something">
+        </Field>}
+        {d.kind !== "dream" && <Field label="When it finds something">
           <Select value={d.on_finding} onChange={(e) => set({ on_finding: e.target.value })}>
             <option value="suggest">Add issues and suggestions to the server</option>
             <option value="incident">Open an incident for critical findings</option>
             <option value="report">Only write a report</option>
           </Select>
-        </Field>
+        </Field>}
         {save.error && <ErrorNote error={save.error} />}
       </div>
     </Drawer>
@@ -213,13 +218,13 @@ export function RoutinesPage() {
             return (
               <Card key={r.id} className={cn("flex flex-col", !r.enabled && "border-dashed bg-surface-2")}>
                 <div className="flex items-start gap-3 px-4 pt-4">
-                  <span className={cn("mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg", r.kind === "agent" ? "bg-arc-soft text-arc-ink" : "bg-surface-3 text-ink-2")}>
-                    {r.kind === "agent" ? <Bot className="size-4" /> : <ListChecks className="size-4" />}
+                  <span className={cn("mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg", r.kind === "check" ? "bg-surface-3 text-ink-2" : "bg-arc-soft text-arc-ink")}>
+                    {r.kind === "agent" ? <Bot className="size-4" /> : r.kind === "dream" ? <MoonStar className="size-4" /> : <ListChecks className="size-4" />}
                   </span>
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="text-[15px] font-semibold">{r.name}</span>
-                      <Badge tone={r.kind === "agent" ? "arc" : "neutral"}>{r.kind === "agent" ? "AI review" : "Checks"}</Badge>
+                      <Badge tone={r.kind === "check" ? "neutral" : "arc"}>{KIND_LABEL[r.kind]}</Badge>
                       {!r.builtin && <Badge>Custom</Badge>}
                     </div>
                     <p className="mt-0.5 line-clamp-2 text-[12.5px] text-ink-2">{r.description}</p>
@@ -230,7 +235,7 @@ export function RoutinesPage() {
                   <div className="flex items-center gap-1.5 text-ink-2"><CalendarClock className="size-3.5 text-ink-3" />{r.schedule}{r.timezone !== "UTC" && ` (${r.timezone})`}</div>
                   <div className="text-right text-ink-3">{r.enabled && r.next_run_at ? <>Next {until(r.next_run_at)}</> : "Off"}</div>
                   <div className="text-ink-3">{scopeText(r)}</div>
-                  <div className="text-right text-ink-3">{ON_FINDING[r.on_finding]}</div>
+                  <div className="text-right text-ink-3">{r.kind === "dream" ? <Link to="/knowledge" className="hover:text-ink hover:underline">Learns into Knowledge</Link> : ON_FINDING[r.on_finding]}</div>
                 </div>
                 <div className="mt-auto flex items-center gap-3 border-t border-line px-4 py-2.5">
                   <RunStrip runs={r.recent_runs} onOpen={(id) => { setRunRoutine(r); setRunId(id); }} />

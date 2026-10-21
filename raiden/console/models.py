@@ -388,3 +388,74 @@ class Setting(Base):
     value: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, onupdate=utcnow)
     updated_by: Mapped[str] = mapped_column(String(200), default="system")
+
+
+class Knowledge(Base):
+    """What rAIden knows beyond its prompts: instructions (rules, facts, preferences) and skills (the playbook for one kind
+    of incident), taught by people or learned in dreams from their decisions. An edit keeps the previous version."""
+
+    __tablename__ = "knowledge"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    kind: Mapped[str] = mapped_column(String(12))  # rule | fact | preference | skill
+    title: Mapped[str] = mapped_column(String(300))
+    body: Mapped[str] = mapped_column(Text, default="")
+    scope: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)  # {} = the fleet; server, environment and category narrow it
+    source: Mapped[str] = mapped_column(String(12), default="person")  # person | decision | incident | dream
+    author: Mapped[str] = mapped_column(String(200), default="")
+    evidence: Mapped[list[Any]] = mapped_column(JSON, default=list)  # [{"type": approval | note | chat | incident | suggestion, "id", "by", "text"}]
+    retention: Mapped[str] = mapped_column(String(10), default="durable")  # permanent | durable | ephemeral (expires)
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    status: Mapped[str] = mapped_column(String(10), default="active")  # active | proposed | retired
+    uses: Mapped[int] = mapped_column(Integer, default=0)  # how often it went into a prompt
+    last_used_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    revisions: Mapped[list[Any]] = mapped_column(JSON, default=list)  # earlier versions, oldest first
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)  # the last change of what it says (being used is not one)
+
+
+class LearnedApproval(Base):
+    """'Do not ask again': people approved the same action for the same kind of incident several times and rejected it
+    never. A dream proposes it, a person accepts it, the next such gate opens on its own, and the next rejection revokes
+    it. Never for high-risk actions."""
+
+    __tablename__ = "learned_approvals"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    action: Mapped[str] = mapped_column(String(40))
+    category: Mapped[str] = mapped_column(String(32))
+    environment: Mapped[str] = mapped_column(String(16))
+    server_id: Mapped[str | None] = mapped_column(String(64), nullable=True)  # set when every approval came from one server
+    status: Mapped[str] = mapped_column(String(10), default="proposed")  # proposed | active | declined | revoked
+    approvals: Mapped[int] = mapped_column(Integer, default=0)
+    approvers: Mapped[list[Any]] = mapped_column(JSON, default=list)
+    evidence: Mapped[list[Any]] = mapped_column(JSON, default=list)  # [{"approval_id", "incident_id", "server_id", "by", "at", "comment"}]
+    proposed_by: Mapped[str] = mapped_column(String(200), default="")
+    decided_by: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    decided_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    reason: Mapped[str] = mapped_column(Text, default="")  # why it was declined or revoked
+    uses: Mapped[int] = mapped_column(Integer, default=0)  # gates it opened
+    last_used_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, onupdate=utcnow)
+
+
+class Dream(Base):
+    """One consolidation: what it read since the previous dream (its cursor), what it changed (with the versions before,
+    so it can be undone) and what it cost."""
+
+    __tablename__ = "dreams"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    run_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    started_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    status: Mapped[str] = mapped_column(String(10), default="running")  # running | done | error | undone
+    triggered_by: Mapped[str] = mapped_column(String(200), default="schedule")
+    cursor: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)  # how far it read: decisions, events, chat, incidents, suggestions
+    read: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)  # how much was new
+    changes: Mapped[list[Any]] = mapped_column(JSON, default=list)  # [{"op", "type", "id", "kind", "title", "before", "after"}]
+    summary: Mapped[str] = mapped_column(Text, default="")
+    tokens_in: Mapped[int] = mapped_column(Integer, default=0)
+    tokens_out: Mapped[int] = mapped_column(Integer, default=0)
+    cost_usd: Mapped[float] = mapped_column(Float, default=0.0)
+    model: Mapped[str] = mapped_column(String(120), default="")
+    undone_by: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    undone_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)

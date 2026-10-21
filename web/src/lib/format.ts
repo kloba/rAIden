@@ -123,6 +123,9 @@ export function titleCase(s: string): string {
 const CATEGORY: Record<string, string> = { cpu: "CPU", io: "I/O", wal: "WAL", xid: "Transaction IDs" };
 /** A monitor or metric category as people say it. */
 export const categoryLabel = (c: string) => CATEGORY[c] ?? titleCase(c);
+const KIND_OF: Record<string, string> = { locks: "lock", connections: "connection", cpu: "CPU" };
+/** 'lock incidents', 'replication incidents': a kind of incident in a sentence. */
+export const incidentKind = (c: string) => `${KIND_OF[c] ?? c.replace(/_/g, " ")} incidents`;
 
 export function initials(nameOrEmail: string): string {
   const base = nameOrEmail.includes("@") ? nameOrEmail.split("@")[0].replace(/[._-]/g, " ") : nameOrEmail;

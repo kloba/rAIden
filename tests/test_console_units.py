@@ -265,7 +265,8 @@ def test_routine_templates_the_model_may_propose_exist():
     from raiden.console import routines
     from raiden.console.agent.tools import ROUTINE_TEMPLATES
 
-    assert ROUTINE_TEMPLATES == [t["key"] for t in routines.TEMPLATES]
+    # every template but the dream, which is the fleet's own and always there
+    assert ROUTINE_TEMPLATES == [t["key"] for t in routines.TEMPLATES if t["kind"] != "dream"]
 
 
 def test_fabric_database_hub_security_assessments_from_the_azure_resource():

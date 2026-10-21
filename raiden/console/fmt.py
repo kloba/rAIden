@@ -15,6 +15,14 @@ def category(c: str) -> str:
     return {"cpu": "CPU", "io": "I/O", "wal": "WAL", "xid": "Transaction IDs"}.get(c, c[:1].upper() + c[1:].replace("_", " "))
 
 
+INCIDENT_KIND = {"locks": "lock", "connections": "connection", "cpu": "CPU"}
+
+
+def incidents(c: str) -> str:
+    """'lock incidents', 'replication incidents': a kind of incident in a sentence (the web UI's incidentKind)."""
+    return f"{INCIDENT_KIND.get(c, c.replace('_', ' '))} incidents"
+
+
 def duration(seconds: float) -> str:
     s = int(round(seconds))
     if s < 90:

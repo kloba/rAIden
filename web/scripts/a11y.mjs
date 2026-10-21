@@ -15,7 +15,7 @@ const base = process.env.BASE || "http://127.0.0.1:8787";
 const chrome = process.env.CHROME
   || (process.platform === "darwin" ? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" : "/usr/bin/google-chrome");
 const pages = ["/", "/estate", "/servers/orders-prod", "/performance", "/incidents", "/incidents/:open", "/incidents/:resolved",
-  "/approvals", "/chat", "/routines", "/monitors", "/databases", "/databases/new", "/ai", "/autonomy", "/audit", "/settings"];
+  "/approvals", "/chat", "/routines", "/monitors", "/knowledge", "/databases", "/databases/new", "/ai", "/autonomy", "/audit", "/settings"];
 const rules = { runOnly: { type: "tag", values: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"] } };
 
 const { demo_login: login } = await (await fetch(`${base}/api/v1/auth/status`)).json();

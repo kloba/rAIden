@@ -1,5 +1,6 @@
 """Seed the demo workspace: seven servers on six platforms, 30 days of metrics, the incident history that matches them,
-AI endpoints with their usage, routine runs, assessments, an audit trail and a few past chat investigations.
+AI endpoints with their usage, routine runs, assessments, an audit trail, a few past chat investigations, and what rAIden
+learned over the month (taught instructions, lessons, playbooks, ten nights of dreams and a proposal not to ask again).
 
 Everything here is simulated and labelled so in the UI (servers and endpoints carry `simulated`)."""
 
@@ -212,6 +213,7 @@ async def seed_demo(rt: Any) -> None:
                                                                                    "preview": {"note": "simulated history"}}, created_at=at + timedelta(seconds=4)))
             s.add(ChatMessage(conversation_id=cid, role="assistant", content=a.replace("{lq}", (lq or "INC-1009").split("-")[1]),
                               data={"model": "claude-sonnet-5", "simulated": True, "tokens_in": 14200, "tokens_out": 380}, created_at=at + timedelta(seconds=11)))
+    _knowledge(rt, now)
 
 
 def _past_incident(s: Any, rt: Any, rng: random.Random, number: int, sid: str, kind: str, begin: datetime, minutes: float, ep: AIEndpoint) -> None:
@@ -359,7 +361,7 @@ def _usage(rt: Any, rng: random.Random, now: datetime) -> None:
 
 def _routine_runs(rt: Any, rng: random.Random, now: datetime) -> None:
     with rt.db.session() as s:
-        for r in s.execute(select(Routine).where(Routine.enabled.is_(True))).scalars():
+        for r in s.execute(select(Routine).where(Routine.enabled.is_(True), Routine.kind != "dream")).scalars():  # the dreams have their own history
             cron = Cron(r.cron)
             at = now - timedelta(days=2)
             times = []
@@ -380,3 +382,217 @@ def _routine_runs(rt: Any, rng: random.Random, now: datetime) -> None:
             if times:
                 r.last_run_at, r.last_status = times[-1], "warn" if r.key == "security-posture" else "ok"
             r.next_run_at = cron.next_after(now)
+
+
+# ---------------------------------------------------------------------------------------------------- what rAIden learned
+TAUGHT = [  # (days ago, who, kind, title, body, scope, retention): taught on the Knowledge page
+    (30, "alex@contoso.com", "rule", "Never end sessions of the replication or backup roles (replicator, pgbackrest).",
+     "A standby or a backup that loses its session starts over. Page the on-call instead.", {}, "permanent"),
+    (21, "sam@contoso.com", "preference", "Put the exact SQL in every recommendation, ready to paste.", "", {}, "durable"),
+    (12, "alex@contoso.com", "fact", "The migrator role runs schema migrations on weekdays at 14:00 UTC, from the deploy pipeline.", "",
+     {"server": "orders-prod"}, "durable"),
+]
+TAUGHT_IN_CHAT = ("sam@contoso.com", 5, "From now on, page the payments on-call before any change on payments-prod: it is PCI scope.",
+                  "rule", "Page the payments on-call before any change on payments-prod.", "PCI scope: every change needs a ticket. Read as much as you need.")
+LOCK_COMMENT = "Go. analyst sessions are ad-hoc reporting: ending them is always fine."
+
+
+def first_name_of(email: str) -> str:
+    return next((name.split()[0] for e, name, _ in DEMO_USERS if e == email), email)
+
+
+def _knowledge(rt: Any, now: datetime) -> None:
+    """A month of learning, consistent with the history above: what the team taught (on the Knowledge page and in a chat),
+    the lessons incidents left, ten nights of dreams that read what each day brought, and the proposal not to ask again
+    that the third approval of the same plan made. It waits for a person, so the live lock queue still stops at the gate."""
+    from .. import learning
+    from ..dreams import _knowledge_change, read_text, report
+    from ..models import Dream, Knowledge
+    from .model import SKILL_TITLES, playbook
+
+    with rt.db.session() as s:
+        incs = list(s.execute(select(Incident).order_by(Incident.detected_at)).scalars())
+        gates = {a.incident_id: a for a in s.execute(select(Approval).where(Approval.kind == "gate", Approval.stage == "remediate")).scalars()}
+        made: list[Knowledge] = []
+
+        def know(at: datetime, **kw: Any) -> Knowledge:
+            k = Knowledge(created_at=at, updated_at=at, **kw)
+            s.add(k)
+            s.flush()
+            made.append(k)
+            return k
+
+        for days, who, kind, title, body, scope, retention in TAUGHT:
+            know(now - timedelta(days=days, hours=3), kind=kind, title=title, body=body, scope=scope, source="person", author=who, retention=retention)
+        who, days, said, kind, title, body = TAUGHT_IN_CHAT  # the chat's remember tool
+        at = now - timedelta(days=days, hours=6)
+        cid = uuid.uuid4().hex
+        s.add(Conversation(id=cid, title=said[:70], server_id="payments-prod", user_email=who, created_at=at, updated_at=at + timedelta(seconds=9)))
+        s.flush()
+        msg = ChatMessage(conversation_id=cid, role="user", content=said, data={"user": who}, created_at=at)
+        s.add(msg)
+        s.flush()
+        k = know(at + timedelta(seconds=5), kind=kind, title=title, body=body, scope={"server": "payments-prod"}, source="person", author=who,
+                 evidence=[{"type": "chat", "id": str(msg.id), "chat": cid, "by": who, "text": said}])
+        s.add(ChatMessage(conversation_id=cid, role="tool", content="", created_at=at + timedelta(seconds=5), data={
+            "name": "remember", "args": {"kind": kind, "title": title, "body": body, "scope": {"server": "payments-prod"}}, "ok": True, "ms": 14,
+            "preview": {"knowledge_id": k.id, "title": title, "scope": "payments-prod", "new": True}}))
+        s.add(ChatMessage(conversation_id=cid, role="assistant", created_at=at + timedelta(seconds=9),
+                          content=f"Remembered for **payments-prod**: *{title}*\n\nIt is part of every incident, chat and routine from now on, for the "
+                                  "whole team. You can edit or retire it on the Knowledge page.",
+                          data={"model": "claude-sonnet-5", "simulated": True, "tokens_in": 9100, "tokens_out": 160}))
+        # the lessons incidents left in Harden: a fact about their server
+        for inc in incs:
+            for h in inc.hardening or []:
+                if h.get("kind") != "lesson" or h.get("status") != "applied":
+                    continue
+                ev = {"type": "incident", "id": inc.id, "by": h.get("approved_by"), "text": h["title"]}
+                twin = next((x for x in made if x.title == h["title"] and x.scope == {"server": inc.server_id}), None)
+                if twin is not None:
+                    twin.evidence = list(twin.evidence) + [ev]
+                else:
+                    know(inc.resolved_at, kind="fact", title=h["title"], scope={"server": inc.server_id}, source="incident", author=inc.id, evidence=[ev])
+        # the words that taught a dream something: a comment on the first lock-queue plan approved on orders-prod
+        first_lock = next(i for i in incs if i.server_id == "orders-prod" and i.scenario == "lock_queue")
+        gate = gates[first_lock.id]
+        gate.comment = LOCK_COMMENT
+        for e in s.execute(select(IncidentEvent).where(IncidentEvent.incident_id == first_lock.id, IncidentEvent.kind == "decision")).scalars():
+            if e.stage == "diagnose":
+                e.body = LOCK_COMMENT
+        s.flush()
+        # the third approval of the same plan for a lock queue in production: rAIden proposed not to ask again, right then
+        for la in learning.propose_approvals(s, learning.approval_patterns(s, 3), by=""):
+            last = max(la.evidence, key=lambda e: e["at"])
+            la.proposed_by = "raiden"
+            la.created_at = la.updated_at = gates[last["incident_id"]].decided_at
+            s.add(IncidentEvent(incident_id=last["incident_id"], ts=la.created_at + timedelta(seconds=1), kind="learned", actor="raiden", stage="remediate",
+                                title=f"rAIden proposes not to ask again: {learning.describe_approval(la)}",
+                                body=f"{la.reason} A person accepts or declines it on the Knowledge page.", data={"learned": [la.id], "proposed": True}))
+
+        # ten nights of dreams, each reading what the day before brought
+        last_night = now.replace(hour=3, minute=0, second=0, microsecond=0)
+        if last_night > now - timedelta(minutes=5):
+            last_night -= timedelta(days=1)
+        nights = [last_night - timedelta(days=d) for d in range(9, -1, -1)]
+        users_said = list(s.execute(select(ChatMessage).where(ChatMessage.role == "user")).scalars())
+        decided = [a for a in s.execute(select(Approval).where(Approval.decided_at.isnot(None))).scalars() if learning.is_person(a.decided_by)]
+        routine = s.execute(select(Routine).where(Routine.key == "dream")).scalar_one()
+        local = s.execute(select(AIEndpoint).where(AIEndpoint.name == ENDPOINTS[2]["name"])).scalar_one()
+
+        def night_after(t: datetime) -> datetime:
+            return next(n for n in nights if n > t)
+
+        def by_category(cat: str, before: datetime) -> dict[str, Any]:
+            done = [i for i in incs if i.category == cat and i.resolved_at and i.resolved_at < before and any(p.get("status") == "done" for p in i.plan or [])]
+            return {"category": cat, "skill_id": None, "incidents": [
+                {"id": i.id, "server": i.server_id, "title": i.title, "root_cause": i.root_cause, "actions": [learning._call(p) for p in i.plan],
+                 "protections": [h["title"] for h in i.hardening or [] if h.get("status") == "applied"]} for i in done[-6:]]}
+
+        storm2 = [i for i in incs if i.server_id == "analytics-staging" and i.scenario == "connection_storm"][-1]
+        lag = next(i for i in incs if i.server_id == "payments-replica" and i.scenario == "replication_lag")
+        deadlock = next(i for i in incs if i.server_id == "orders-prod" and i.scenario == "deadlocks")
+        fixed = IncidentEvent(incident_id=deadlock.id, ts=deadlock.resolved_at - timedelta(seconds=20), kind="comment", actor=deadlock.assignee, stage="diagnose",
+                              title=f"{first_name_of(deadlock.assignee)} wrote what fixed it",
+                              body="Fixed in the order service: release 2026.10.3 locks orders before order_lines. Nothing to do in the database.")
+        s.add(fixed)
+        s.flush()
+        metabase = [x for x in made if x.title.startswith("Metabase")]
+        plans: dict[datetime, list[tuple[str, Any]]] = {}
+        plans.setdefault(night_after(gate.decided_at), []).extend([("words", gate), ("skill", "locks")])
+        plans.setdefault(night_after(storm2.resolved_at), []).extend([("skill", "connections"), ("widen", metabase)])
+        plans.setdefault(night_after(lag.resolved_at), []).append(("infer", lag))
+        plans.setdefault(night_after(deadlock.resolved_at), []).append(("resolution", deadlock))
+        summaries = {"words": "{who} said analyst sessions on orders-prod may always be ended to clear a lock queue: a rule for its lock queues now.",
+                     "skill": "Wrote the playbook for {cat}: {n} incidents fixed the same way.",
+                     "widen": "Merged the two Metabase facts into one for the fleet: it happened on orders-prod and on analytics-staging.",
+                     "infer": "The replay lag on payments-replica was a finance report holding replay back: an inference from one incident, so it waits "
+                              "for a person to confirm.",
+                     "resolution": "{who} wrote that the orders-prod deadlocks are fixed in the application code: rAIden escalates them from now on."}
+        prev = nights[0] - timedelta(days=1)
+        for night in nights:
+            read = {"decisions": sum(prev < a.decided_at <= night for a in decided), "notes": int(prev < fixed.ts <= night),
+                    "statements": sum(prev < m.created_at <= night for m in users_said),
+                    "incidents": sum(bool(i.resolved_at) and prev < i.resolved_at <= night for i in incs), "dismissed": 0}
+            run = RoutineRun(routine_id=routine.id, started_at=night, status="ok", triggered_by="schedule")
+            s.add(run)
+            s.flush()
+            d = Dream(run_id=run.id, started_at=night, status="done", triggered_by="schedule", read=read)
+            s.add(d)
+            s.flush()
+            me, changes, said_parts = f"dream #{d.id}", [], []
+            for what, x in plans.get(night, []):
+                if what == "words":
+                    k = know(night, kind="rule", title="Sessions of the analyst role are ad-hoc reports: ending one to clear a lock queue is fine.",
+                             scope={"server": "orders-prod", "category": "locks"}, source="dream", author=me,
+                             evidence=[{"type": "decision", "id": str(x.id), "by": x.decided_by, "text": x.comment, "words": True}])
+                    changes.append(_knowledge_change("add", k, None))
+                    said_parts.append(summaries["words"].format(who=first_name_of(x.decided_by)))
+                elif what == "skill":
+                    cand = by_category(x, night)
+                    k = know(night, kind="skill", title=SKILL_TITLES[x], body=playbook(cand), scope={"category": x}, source="dream", author=me,
+                             evidence=[{"type": "incident", "id": i["id"], "by": "raiden", "text": i["title"], "words": False} for i in cand["incidents"][-3:]])
+                    changes.append(_knowledge_change("add", k, None))
+                    said_parts.append(summaries["skill"].format(cat=fmt.incidents(x), n=len(cand["incidents"])))
+                elif what == "widen" and len(x) == 2:
+                    keep, drop = sorted(x, key=lambda k: -len(k.evidence))
+                    for k, op, why in ((keep, "update", "the same on orders-prod: one fact for the fleet"), (drop, "retire", "merged into the fleet-wide fact")):
+                        before = learning.snapshot(k)
+                        k.revisions = [{**before, "at": iso(night), "by": me, "why": why}]
+                        if op == "update":
+                            k.scope, k.evidence = {}, list(k.evidence) + list(drop.evidence)
+                        else:
+                            k.status = "retired"
+                        k.updated_at = night
+                        changes.append(_knowledge_change(op, k, before))
+                    said_parts.append(summaries["widen"])
+                elif what == "infer":
+                    k = know(night, kind="rule", title="On payments-replica, cancel the report that holds replay back, then cap its statement_timeout.",
+                             scope={"server": "payments-replica", "category": "replication"}, source="dream", author=me, status="proposed",
+                             evidence=[{"type": "incident", "id": x.id, "by": "raiden", "text": x.title, "words": False}] +
+                                      ([{"type": "decision", "id": str(gates[x.id].id), "by": gates[x.id].decided_by, "text": f"approved: {gates[x.id].title}", "words": False}]
+                                       if x.id in gates else []))
+                    changes.append(_knowledge_change("add", k, None))
+                    said_parts.append(summaries["infer"])
+                elif what == "resolution":
+                    k = know(night, kind="fact", title="Deadlocks on orders-prod come from two order workers locking orders and order_lines in opposite order: "
+                                                       "the application team fixes them, so escalate instead of ending sessions.",
+                             scope={"server": "orders-prod", "category": "locks"}, source="dream", author=me,
+                             evidence=[{"type": "note", "id": str(fixed.id), "by": fixed.actor, "text": fixed.body, "words": True},
+                                       {"type": "incident", "id": x.id, "by": fixed.actor, "text": x.title, "words": False}])
+                    changes.append(_knowledge_change("add", k, None))
+                    said_parts.append(summaries["resolution"].format(who=first_name_of(x.assignee)))
+            if not any(read.values()):
+                summary, tokens = "Nothing new to read since the last dream.", (0, 0)
+            elif said_parts:
+                summary = " ".join(said_parts)
+                tokens = (9_000 + 2_600 * sum(read.values()), 700 + 450 * len(changes))
+            else:
+                summary = f"Read {read_text(read)}: nothing new worth keeping, what I know already covers it."
+                tokens = (8_000 + 2_200 * sum(read.values()), 260)
+            took = timedelta(seconds=(20 + 9 * len(changes) + 3 * sum(read.values())) if tokens[0] else 1)
+            d.finished_at, d.changes, d.summary, d.tokens_in, d.tokens_out, d.model = night + took, changes, summary, tokens[0], tokens[1], local.model if tokens[0] else ""
+            run.finished_at, run.summary, run.report, run.tokens_in, run.tokens_out = night + took, summary, report(read, changes), tokens[0], tokens[1]
+            if tokens[0]:
+                s.add(TokenUsage(endpoint_id=local.id, bucket=night, purpose="routines", server_id="", calls=2, errors=0, tokens_in=tokens[0],
+                                 tokens_out=tokens[1], tokens_cached=0, cost_usd=0.0))
+            prev = night
+        routine.last_run_at, routine.last_status, routine.next_run_at = nights[-1] + timedelta(seconds=30), "ok", Cron(routine.cron).next_after(now)
+        # how often each was in a prompt since it was learned: the incidents and chats it applied to
+        chats = {c.id: c for c in s.execute(select(Conversation)).scalars()}
+        env = {p.id: p.environment for p in PROFILES}
+        for k in made:
+            if k.status != "active":
+                continue
+            hits = [i.detected_at for i in incs if i.detected_at > k.created_at and learning.applies(k.scope, i.server_id, env.get(i.server_id or ""), i.category)]
+            if k.kind != "skill" and not (k.scope or {}).get("category"):
+                hits += [m.created_at for m in users_said if m.created_at > k.created_at and m.conversation_id in chats
+                         and learning.applies(k.scope, chats[m.conversation_id].server_id, env.get(chats[m.conversation_id].server_id or ""), None)]
+            k.uses, k.last_used_at = len(hits), max(hits, default=None)
+        # where the next dream starts: everything up to last night was read
+        events = s.execute(select(func.max(IncidentEvent.id)).where(IncidentEvent.ts <= last_night)).scalar() or 0
+        put = {"decided_at": learning.stamp(max((a.decided_at for a in decided if a.decided_at <= last_night), default=None)),
+               "event": events, "chat": max((m.id for m in users_said if m.created_at <= last_night), default=0),
+               "resolved_at": learning.stamp(max((i.resolved_at for i in incs if i.resolved_at and i.resolved_at <= last_night), default=None))}
+        from ..services import put_setting
+
+        put_setting(s, "dream_cursor", {k: v for k, v in put.items() if v}, by="schedule")

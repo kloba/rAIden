@@ -29,6 +29,25 @@ The release that turns rAIden from a single-server agent into a product for a fl
 * Deployment: a container image, docker compose with a PostgreSQL state store, a hardened systemd unit.
 * Tested on PostgreSQL 13 to 18 and a streaming standby with a real model: [docs/validation.md](docs/validation.md).
 
+### rAIden learns from your team
+
+How it works: [docs/learning.md](docs/learning.md).
+
+* Instructions (rules, facts, preferences) and playbooks, each with a scope (a server, an environment, a kind of
+  incident), where it came from and how long to keep it. They go into the incident, diagnosis, chat and routine prompts
+  they apply to, and each use is counted. The lessons of Harden are facts about their server now.
+* Teach rAIden on the new Knowledge page, or in a chat (*remember that ...*): the chat keeps it for the whole team.
+* Not asking again: after 3 approvals in a row of the same action for the same kind of incident (90 days, per server or
+  per environment), rAIden proposes it; an admin accepts; the next such plan goes ahead on the record as *learned approval
+  #n*; the next rejection, or *Ask me next time*, takes it back. Never for high-risk actions. A switch and the count are
+  on the Autonomy page.
+* Dreams: a built-in nightly routine reads people's decisions and reasons, notes, chats, resolved incidents and dismissed
+  suggestions since the last dream, and keeps what is worth keeping, following nanobot's Dream: what a person said becomes
+  active, what rAIden inferred waits for a person, corrections replace what they correct, a playbook needs a kind of
+  incident fixed twice. No model call when nothing is new. A journal per dream, and an undo.
+* The demo workspace has a month of it: taught instructions, lessons, playbooks, ten nights of dreams and a proposal not
+  to ask again waiting at the live lock queue.
+
 ### Running it in production
 
 What it takes to run, and what is still missing: [docs/production-readiness.md](docs/production-readiness.md).

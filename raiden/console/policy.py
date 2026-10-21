@@ -45,6 +45,8 @@ DEFAULT_POLICY: dict[str, Any] = {
     "budget_exhausted": "human",         # no AI budget left: every gate waits for a person
     "verify_window_s": 180,
     "max_auto_actions": 8,               # a plan longer than this always needs a person
+    "learn_approvals": True,             # propose not to ask again for what people approve every time (a person accepts it)
+    "learn_after": 3,                    # ... after this many approvals in a row
 }
 
 

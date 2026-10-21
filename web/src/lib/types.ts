@@ -123,6 +123,7 @@ export interface Approval {
   incident_title?: string | null;
   severity?: Severity | null;
   incident_stage?: Stage | null;
+  learning?: ApprovalLearning;
 }
 
 export interface PlanItem {
@@ -343,7 +344,7 @@ export interface Routine {
   key: string | null;
   name: string;
   description: string;
-  kind: "check" | "agent";
+  kind: "check" | "agent" | "dream";
   checks: string[];
   prompt: string;
   cron: string;
@@ -443,6 +444,8 @@ export interface Policy {
     budget_exhausted: string;
     verify_window_s: number;
     max_auto_actions: number;
+    learn_approvals: boolean;
+    learn_after: number;
   };
   overrides: { id: string; name: string; environment: Env; autonomy: Record<string, Mode> }[];
 }
@@ -482,4 +485,97 @@ export interface SettingsPayload {
   general: { organization: string; retention_raw_days: number; retention_rollup_days: number; timezone: string };
   notifications: { webhooks: { name: string; url: string; kind: string; events: string[]; enabled: boolean }[] };
   system: { version: string; demo: boolean; database: string; data_dir: string; base_url: string; max_ai_sessions: number; uptime_s: number; live_listeners: number };
+}
+
+// ------------------------------------------------------------------------------------------------ what rAIden learned
+export type KnowledgeKind = "rule" | "fact" | "preference" | "skill";
+export interface KnowledgeScope { server?: string; environment?: Env; category?: string }
+export interface Evidence { type: "decision" | "note" | "chat" | "incident" | "suggestion"; id: string; by?: string | null; text?: string; words?: boolean; chat?: string }
+
+export interface Knowledge {
+  id: number;
+  kind: KnowledgeKind;
+  title: string;
+  body: string;
+  scope: KnowledgeScope;
+  scope_text: string;
+  source: "person" | "decision" | "incident" | "dream";
+  author: string;
+  evidence: Evidence[];
+  retention: "permanent" | "durable" | "ephemeral";
+  expires_at: string | null;
+  status: "active" | "proposed" | "retired" | "expired";
+  uses: number;
+  last_used_at: string | null;
+  history: { kind: KnowledgeKind; title: string; body: string; scope: KnowledgeScope; status: string; retention: string; at: string; by: string; why: string }[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface LearnedApproval {
+  id: number;
+  action: string;
+  action_title: string;
+  risk: "low" | "medium" | "high";
+  category: string;
+  environment: Env;
+  server_id: string | null;
+  description: string;
+  status: "proposed" | "active" | "declined" | "revoked";
+  approvals: number;
+  approvers: string[];
+  evidence: { approval_id?: number; incident_id?: string; server_id?: string | null; by: string; at?: string; comment?: string; type?: string; id?: string }[];
+  proposed_by: string;
+  decided_by: string | null;
+  decided_at: string | null;
+  reason: string;
+  uses: number;
+  last_used_at: string | null;
+  created_at: string;
+}
+
+export interface DreamChange {
+  op: "add" | "update" | "retire" | "propose";
+  type: "knowledge" | "approval";
+  id: number;
+  kind: string;
+  title: string;
+  status: string;
+  before: { title: string; body: string; scope: KnowledgeScope; status: string } | null;
+  after: { title: string; body: string; scope: KnowledgeScope; status: string } | null;
+}
+
+export interface Dream {
+  id: number;
+  run_id: number | null;
+  started_at: string;
+  finished_at: string | null;
+  status: "running" | "done" | "error" | "undone";
+  triggered_by: string;
+  read: Record<string, number>;
+  read_text: string;
+  changes: DreamChange[];
+  summary: string;
+  tokens: number;
+  cost_usd: number;
+  model: string;
+  undone_by: string | null;
+  undone_at: string | null;
+}
+
+export interface KnowledgePage {
+  items: Knowledge[];
+  learned_approvals: LearnedApproval[];
+  dreams: Dream[];
+  policy: { learn_approvals: boolean; learn_after: number };
+  dreaming: boolean;
+  dream_routine: { id: number; enabled: boolean; cron: string; schedule: string; next_run_at: string | null; last_run_at: string | null } | null;
+  categories: { id: string; name: string }[];
+}
+
+export interface ApprovalLearning {
+  category: string;
+  environment: Env;
+  learn_after: number;
+  actions: { action: string; title: string; high_risk: boolean; approved: number; approvers: string[]; learned: { id: number; status: LearnedApproval["status"] } | null }[];
 }

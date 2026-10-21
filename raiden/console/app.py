@@ -92,13 +92,14 @@ def create_app(settings: ConsoleSettings | None = None, start_background: bool =
 
     app = FastAPI(title="rAIden Console", version=__version__, lifespan=lifespan, docs_url="/api/docs", openapi_url="/api/openapi.json", redoc_url=None,
                   description="The API of rAIden Console, the AI on-call DBA for PostgreSQL fleets: servers and their metrics, incidents and "
-                              "approvals, the autonomy policy, monitors, routines, chat, AI endpoints, people and the audit log. Sign in with "
-                              "POST /api/v1/auth/login; every change needs the header X-Requested-With: raiden.")
+                              "approvals, the autonomy policy, monitors, routines, chat, what rAIden learned (knowledge, learned approvals, "
+                              "dreams), AI endpoints, people and the audit log. Sign in with POST /api/v1/auth/login; every change needs the "
+                              "header X-Requested-With: raiden.")
     app.state.rt = runtime
 
-    from .api import auth, estate, incidents, rest
+    from .api import auth, estate, incidents, knowledge, rest
 
-    for r in (auth.router, estate.router, incidents.router, rest.router):
+    for r in (auth.router, estate.router, incidents.router, knowledge.router, rest.router):
         app.include_router(r)
 
     @app.get("/healthz")

@@ -503,5 +503,6 @@ def dismiss(xid: int, runtime: Any = Depends(rt), who: User = Depends(operator))
         if x is None:
             raise HTTPException(404, "No such suggestion.")
         x.status = "dismissed"
+        x.data = {**(x.data or {}), "dismissed_by": who.email}  # a dream reads who did not want it
         audit(s, who.email, "suggestion.dismiss", x.server_id, "allow", title=x.title)
         return serial.suggestion(x)

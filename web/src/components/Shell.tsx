@@ -1,11 +1,11 @@
 import {
-  Activity, BellRing, BookOpenCheck, CalendarClock, ChevronDown, Cpu, Database, Hand, LayoutDashboard, LogOut, MessageSquareText, Moon, ScrollText, Server,
-  Settings, SlidersHorizontal, Sun, Zap,
+  Activity, BellRing, BookOpenCheck, CalendarClock, ChevronDown, Cpu, Database, GraduationCap, Hand, LayoutDashboard, LogOut, MessageSquareText, Moon,
+  ScrollText, Server, Settings, SlidersHorizontal, Sun, Zap,
 } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router";
 import { api } from "../lib/api";
-import { useApprovals, useIncidents, useLiveEvents, useMe } from "../lib/hooks";
+import { useApprovals, useIncidents, useKnowledge, useLiveEvents, useMe } from "../lib/hooks";
 import type { User } from "../lib/types";
 import { Avatar, cn } from "./ui";
 
@@ -114,7 +114,9 @@ export function Shell({ demo }: { demo: boolean }) {
   useLiveEvents(!!user);
   const approvals = useApprovals("pending");
   const incidents = useIncidents("open");
+  const knowledge = useKnowledge();
   const waiting = approvals.data?.length ?? 0;
+  const proposals = (knowledge.data?.learned_approvals.filter((la) => la.status === "proposed").length ?? 0) + (knowledge.data?.items.filter((k) => k.status === "proposed").length ?? 0);
   if (!user) return null;
   return (
     <div className="flex h-full min-h-0">
@@ -134,6 +136,7 @@ export function Shell({ demo }: { demo: boolean }) {
           <Group label="Automate">
             <NavItem to="/routines" icon={<CalendarClock className="size-4" />} label="Routines" />
             <NavItem to="/monitors" icon={<BellRing className="size-4" />} label="Monitors" />
+            <NavItem to="/knowledge" icon={<GraduationCap className="size-4" />} label="Knowledge" badge={proposals} tone="lamp" />
           </Group>
           <Group label="Configure">
             <NavItem to="/databases" icon={<Database className="size-4" />} label="Databases" />

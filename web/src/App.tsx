@@ -15,6 +15,7 @@ import { DatabasesPage } from "./pages/Databases";
 import { EstatePage } from "./pages/Estate";
 import { IncidentPage } from "./pages/IncidentPage";
 import { IncidentsPage } from "./pages/Incidents";
+import { KnowledgePage } from "./pages/Knowledge";
 import { MonitorsPage } from "./pages/Monitors";
 import { OnboardPage } from "./pages/Onboard";
 import { OverviewPage } from "./pages/Overview";
@@ -52,6 +53,7 @@ export function App() {
             <Route path="/chat/:id" element={<ChatPage />} />
             <Route path="/routines" element={<RoutinesPage />} />
             <Route path="/monitors" element={<MonitorsPage />} />
+            <Route path="/knowledge" element={<KnowledgePage />} />
             <Route path="/databases" element={<DatabasesPage />} />
             <Route path="/databases/new" element={<OnboardPage />} />
             <Route path="/ai" element={<AIEndpointsPage />} />

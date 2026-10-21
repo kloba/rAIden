@@ -2,8 +2,8 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tansta
 import { useEffect, useRef } from "react";
 import { api } from "./api";
 import type {
-  Approval, Assessment, AuditEntry, Catalog, Conversation, Endpoint, EstateRow, FleetSeries, IncidentCard, IncidentDetail, Monitor, Overview,
-  Policy, Routine, RoutineRun, Series, Server, ServerDetail, SettingsPayload, Table, Usage, User,
+  Approval, Assessment, AuditEntry, Catalog, Conversation, Endpoint, EstateRow, FleetSeries, IncidentCard, IncidentDetail, KnowledgePage, Monitor,
+  Overview, Policy, Routine, RoutineRun, Series, Server, ServerDetail, SettingsPayload, Table, Usage, User,
 } from "./types";
 
 export const serverColor = (slot: number | undefined) => `var(--s${((slot ?? 0) % 8) + 1})`;
@@ -59,6 +59,8 @@ export const useApprovals = (status = "pending") =>
 export const usePolicy = () => useQuery({ queryKey: ["autonomy"], queryFn: () => api.get<Policy>("/autonomy") });
 export const useMonitors = () => useQuery({ queryKey: ["monitors"], queryFn: () => api.get<Monitor[]>("/monitors"), refetchInterval: 30_000 });
 export const useRoutines = () => useQuery({ queryKey: ["routines"], queryFn: () => api.get<Routine[]>("/routines"), refetchInterval: 30_000 });
+export const useKnowledge = () =>
+  useQuery({ queryKey: ["knowledge"], queryFn: () => api.get<KnowledgePage>("/knowledge"), refetchInterval: (q) => (q.state.data?.dreaming ? 2000 : 60_000) });
 export const useRun = (id: number | null) =>
   useQuery({ queryKey: ["run", id], queryFn: () => api.get<RoutineRun>(`/runs/${id}`), enabled: id != null, refetchInterval: (q) => (q.state.data?.status === "running" ? 1500 : false) });
 export const useEndpoints = () => useQuery({ queryKey: ["endpoints"], queryFn: () => api.get<Endpoint[]>("/ai/endpoints"), refetchInterval: 60_000 });
@@ -121,10 +123,11 @@ export function useLiveEvents(enabled: boolean) {
       es.addEventListener("incident", () => mark("incidents", "incident", "overview", "approvals", "estate", "server"));
       es.addEventListener("approval", () => mark("approvals", "overview", "incidents", "incident", "conversation"));
       es.addEventListener("estate", () => mark("estate", "overview", "server"));
-      es.addEventListener("routine", () => mark("routines", "run"));
+      es.addEventListener("routine", () => mark("routines", "run", "knowledge"));
+      es.addEventListener("knowledge", () => mark("knowledge", "incident", "approvals"));
       es.addEventListener("assessment", () => mark("assessments", "assessment", "server", "estate"));
       es.addEventListener("chat", () => mark("conversation", "conversations"));
-      es.addEventListener("autonomy", () => mark("autonomy", "estate", "incident"));
+      es.addEventListener("autonomy", () => mark("autonomy", "estate", "incident", "knowledge"));
     };
     const close = () => {
       es?.close();

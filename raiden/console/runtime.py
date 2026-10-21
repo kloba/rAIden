@@ -68,8 +68,10 @@ class Runtime:
         self.pipeline = Pipeline(self)
         self.routines = RoutineRunner(self)
         from .chat import ChatService
+        from .dreams import Dreamer
 
         self.chat = ChatService(self)
+        self.dreamer = Dreamer(self)
         self._drivers: dict[str, tuple[str, Any]] = {}
         self._azure: dict[str, tuple[AzureMonitorSource, float, dict[str, float]]] = {}
         self._collectors: dict[str, tuple[str, asyncio.Task[None]]] = {}
@@ -400,8 +402,10 @@ class Runtime:
         return {"servers": out}
 
     def lessons_for(self, s: Any, sid: str | None) -> list[str]:
-        lessons = get_setting(s, "lessons")
-        return [x["text"] for x in (lessons.get(sid or "", []) + lessons.get("_fleet", []))][-12:]
+        """What the team taught rAIden that holds for this server (or the fleet), for the recent_incidents tool."""
+        from .learning import environment_of, instructions_for
+
+        return [k.title + (f" {k.body}" if k.body else "") for k in instructions_for(s, sid, environment_of(s, sid))]
 
     def enable_routine(self, s: Any, template: str, sid: str | None) -> str:
         r = s.execute(select(Routine).where(Routine.key == template)).scalar_one_or_none()

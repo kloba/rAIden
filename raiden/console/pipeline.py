@@ -7,6 +7,8 @@ a person. Rules that hold whatever the policy says:
 * high-risk actions (drop a slot, roll back a prepared transaction, free SQL) always wait for a person (policy default);
 * a plan longer than `max_auto_actions` always waits for a person;
 * no AI endpoint (or budget) left means the incident waits for a person instead of failing silently.
+
+A remediation gate a person would open anyway (an accepted learned approval, see learning.py) opens on its own, and says so.
 """
 
 from __future__ import annotations
@@ -20,16 +22,16 @@ from typing import Any
 
 from sqlalchemy import select
 
-from . import fmt
+from . import fmt, learning
 from .agent.loop import AgentLoop, LoopResult
 from .agent.prompts import PLATFORM_NOTES, STAGE, SYSTEM_INCIDENT, incident_context, plan_text
 from .agent.tools import ACTION_NEEDS, ROUTINE_TEMPLATES, ToolContext, ToolOutcome, server_brief, tools_for
 from .catalog import BY_ID
-from .db import iso, utcnow
+from .db import utcnow
 from .drivers.base import ACTIONS, DriverError
-from .models import AgentSession, Approval, Incident, IncidentEvent, Monitor, Server
+from .models import AgentSession, Approval, Incident, IncidentEvent, LearnedApproval, Monitor, Server, User
 from .policy import STAGE_INFO, mode_for
-from .services import OPEN_STAGES, add_event, audit, get_setting, put_setting, set_stage, upsert_suggestion
+from .services import OPEN_STAGES, add_event, audit, get_setting, set_stage, upsert_suggestion
 
 log = logging.getLogger("raiden.console.pipeline")
 
@@ -141,7 +143,7 @@ class Pipeline:
         metrics = self.rt.current_metrics(inc.server_id)["rows"] if inc.server_id else []
         brief = server_brief(s, inc.server_id) if inc.server_id else "the fleet"
         system = SYSTEM_INCIDENT.format(server=brief, platform_note=PLATFORM_NOTES.get(srv.platform if srv else "", ""))
-        ctx = incident_context(inc, brief, {r[0]: r[2] for r in metrics}, self.rt.lessons_for(s, inc.server_id) if inc.server_id else [])
+        ctx = incident_context(inc, brief, {r[0]: r[2] for r in metrics}, learning.prompt_block(s, inc.server_id, srv.environment if srv else "production"))
         sess = AgentSession(id=uuid.uuid4().hex, kind="incident", incident_id=inc.id, server_id=inc.server_id, status="idle",
                             messages=[{"role": "system", "content": system}, {"role": "user", "content": ctx}])
         s.add(sess)
@@ -170,6 +172,11 @@ class Pipeline:
                 .order_by(IncidentEvent.id)).scalars()]
             text += "\nRecorded times (UTC, " + f"{inc.detected_at:%Y-%m-%d}" + "):\n" + "\n".join(f"- {m}" for m in marks)
             return STAGE["report"].format(hardening=text)
+        if stage == "diagnose":  # triage named the kind of incident: what the team taught for it, and the playbook
+            env = learning.environment_of(s, inc.server_id)
+            extra = [x for x in (learning.prompt_block(s, inc.server_id, env, inc.category, only_category=True),
+                                 learning.skill_block(s, inc.category, inc.server_id, env)) if x]
+            return "\n\n".join([STAGE["diagnose"], *extra])
         return STAGE[stage]
 
     def _signal_state(self, s: Any, inc: Incident) -> str:
@@ -483,12 +490,17 @@ class Pipeline:
 
     # ================================================================================================ gates
     def _gate(self, s: Any, inc: Incident, gate: str, material: str, force_human: bool = False) -> bool:
-        """True when the gate opened right away (autopilot)."""
+        """True when the gate opened right away (autopilot, or a learned approval)."""
         mode = "human" if force_human else self.mode(s, inc, gate)
         if mode == "auto":
             add_event(s, inc, "autopilot", f"Autopilot: {STAGE_INFO[gate]['auto']}", actor="autopilot", data={"gate": gate})
             self._open_gate(s, inc, gate, "autopilot")
             return True
+        if gate == "remediate" and not force_human:
+            learned = learning.covering(s, inc.plan, inc.category, inc.server_id, learning.environment_of(s, inc.server_id), self.policy(s))
+            if learned:
+                self._learned_gate(s, inc, learned, material)
+                return True
         payload: dict[str, Any] = {"gate": gate}
         risk = "low"
         if gate == "remediate":
@@ -507,6 +519,29 @@ class Pipeline:
                   data={"approval_id": appr.id, "gate": gate, "risk": risk}, actor="system")
         self.rt.notify("approval", incident_id=inc.id, approval_id=appr.id)
         return False
+
+    def _learned_gate(self, s: Any, inc: Incident, learned: list[LearnedApproval], material: str) -> None:
+        """People approved this kind of plan every time and accepted not to be asked again: the gate opens on its own, with
+        the decision on record like any other."""
+        actor = "learned approval " + ", ".join(f"#{la.id}" for la in learned)
+        emails = {p for la in learned for p in la.approvers or []} | {la.decided_by for la in learned if la.decided_by}
+        names = {u.email: u.name or u.email for u in s.execute(select(User).where(User.email.in_(emails))).scalars()}
+        who = sorted({names.get(p, p) for la in learned for p in la.approvers or []})
+        accepted = sorted({names.get(la.decided_by, la.decided_by) for la in learned if la.decided_by})
+        times = max(la.approvals for la in learned)
+        why = (f"Not asked again: approved {times} times in a row" + (f" by {', '.join(who)}" if who else "") +
+               (f"; {', '.join(accepted)} accepted not to be asked" if accepted else "") + ".")
+        risk = max((p["risk"] for p in inc.plan), key=lambda r: ["low", "medium", "high"].index(r), default="low")
+        s.add(Approval(incident_id=inc.id, server_id=inc.server_id, kind="gate", stage="remediate", title=GATE_TITLES["remediate"], summary=material,
+                       payload={"gate": "remediate", "plan": inc.plan, "root_cause": inc.root_cause, "learned": [la.id for la in learned]}, risk=risk,
+                       status="approved", decided_at=utcnow(), decided_by=actor, comment=why))
+        learning.use(learned)
+        add_event(s, inc, "learned", f"Learned approval: {'; '.join(learning.describe_approval(la) for la in learned)}", why, actor=actor,
+                  data={"learned": [la.id for la in learned], "gate": "remediate"})
+        audit(s, "raiden", "approval.learned", inc.id, "allow", actor_type="raiden", learned=[la.id for la in learned],
+              plan=[p.get("action") for p in inc.plan])
+        self._open_gate(s, inc, "remediate", actor)
+        self.rt.bus.publish("knowledge")
 
     def _open_gate(self, s: Any, inc: Incident, gate: str, actor: str) -> None:
         if gate in ("triage", "diagnose"):
@@ -554,11 +589,42 @@ class Pipeline:
                     self._open_gate(s, inc, appr.stage, user)
                 else:
                     self._reject_gate(s, inc, appr.stage, user, comment)
+                learned = self._learn(s, appr, inc, approve, user, comment)
+            else:
+                learned = False
             result = {"id": appr.id, "status": appr.status, "incident_id": appr.incident_id, "conversation_id": appr.conversation_id}
         if result["incident_id"]:
             self.rt.bus.publish("incident", id=result["incident_id"])
+        if learned:
+            self.rt.bus.publish("knowledge")
         self.rt.bus.publish("approval", id=approval_id)
         return result
+
+    def _learn(self, s: Any, appr: Approval, inc: Incident, approve: bool, user: str, comment: str) -> bool:
+        """A decision on a plan teaches rAIden: approving it again and again makes a proposal not to ask again (a person
+        accepts it); rejecting an action revokes what was learned for it here."""
+        if not (appr.kind == "action" or (appr.kind == "gate" and appr.stage == "remediate")):
+            return False
+        pl = appr.payload or {}
+        actions = [str(p.get("action")) for p in pl.get("plan") or []] if appr.kind == "gate" else [str(pl.get("action"))]
+        env = learning.environment_of(s, inc.server_id)
+        if not approve:
+            gone = learning.revoke_for(s, actions, inc.category, inc.server_id, env, user, comment)
+            for la in gone:
+                add_event(s, inc, "learned", f"rAIden asks again: {learning.describe_approval(la)}", f"{user} rejected it" + (f": {comment}" if comment else "."),
+                          actor=user, data={"learned": [la.id], "revoked": True})
+                audit(s, user, "learned_approval.revoke", f"learned approval #{la.id}", "allow", reason=comment or "rejected")
+            return bool(gone)
+        policy = self.policy(s)
+        if appr.kind != "gate" or not policy.get("learn_approvals", True):
+            return False
+        s.flush()  # this decision counts
+        found = [c for c in learning.approval_patterns(s, int(policy.get("learn_after", 3)))
+                 if c["action"] in actions and c["category"] == inc.category and c["environment"] == env]
+        for la in learning.propose_approvals(s, found, by="raiden"):
+            add_event(s, inc, "learned", f"rAIden proposes not to ask again: {learning.describe_approval(la)}",
+                      f"{la.reason} A person accepts or declines it on the Knowledge page.", data={"learned": [la.id], "proposed": True})
+        return bool(found)
 
     def _reject_gate(self, s: Any, inc: Incident, gate: str, user: str, comment: str) -> None:
         note = f"{user} rejected" + (f": {comment}" if comment else "")
@@ -676,13 +742,14 @@ class Pipeline:
                                               detail=(h.get("detail") or "") + f"\n\n**How:**\n```\n{spec.get('how', '')}\n```\n\nFrom incident {iid}.",
                                               source=f"incident {iid}", fingerprint=f"incident:{iid}:{h['id']}", data={"incident": iid, "how": spec.get("how", "")})
                     h["status"], h["result"] = "suggested", "on the server's suggestions for a person" if server_id else "in the incident report for a person"
-                elif h["kind"] == "lesson":
+                elif h["kind"] == "lesson":  # a fact about this server from now on (the Knowledge page shows where it came from)
                     with self.rt.db.session() as s:
-                        lessons = get_setting(s, "lessons")
-                        lessons.setdefault(server_id or "_fleet", []).append({"text": spec.get("text") or h["title"], "incident": iid, "at": iso(utcnow())})
-                        lessons[server_id or "_fleet"] = lessons[server_id or "_fleet"][-40:]
-                        put_setting(s, "lessons", lessons, by="raiden")
-                    h["status"], h["result"] = "applied", "lesson remembered"
+                        k, _ = learning.remember(s, kind="fact", title=str(spec.get("text") or h["title"]), body=str(h.get("detail") or ""),
+                                                 scope={"server": server_id} if server_id else {}, source="incident", author=iid,
+                                                 evidence=[{"type": "incident", "id": iid, "by": by, "text": h["title"]}])
+                        kid = k.id
+                    h["status"], h["result"] = "applied", f"remembered as knowledge #{kid}"
+                    self.rt.bus.publish("knowledge")
                 else:
                     h["status"], h["result"] = "failed", f"unknown kind {h['kind']!r}"
             except (DriverError, KeyError, ValueError, TypeError) as exc:

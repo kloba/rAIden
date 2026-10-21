@@ -482,9 +482,28 @@ def _report(c: Ctx, title: str, impact: str) -> tuple[str, list]:
 
 
 # ============================================================================================================ chat
+TEACHING = re.compile(r"^\s*(r?ai?den[,:]?\s*)?(please\s+)?(remember|note that|fyi|always|never|do not|don't|we prefer|i prefer)\b|\bfrom now on\b", re.I)
+
+
+def lesson_title(text: str) -> str:
+    """'remember that the migrator runs at 14:00 UTC' -> 'The migrator runs at 14:00 UTC.' (the chat and the dream agree)."""
+    t = re.sub(r"^\s*(r?ai?den[,:]?\s*)?(please\s+)?(remember( that|:)?|note( that|:)?|fyi[,:]?)\s*", "", text.strip(), flags=re.I)
+    t = re.split(r"(?<=[.!?])\s", t, maxsplit=1)[0].strip().rstrip(".!") or text.strip()
+    return (t[:1].upper() + t[1:])[:200] + "."
+
+
+def _focus(c: Ctx) -> str | None:
+    m = re.search(r"Server in focus: ([\w.-]+) \(", c.context)
+    return m.group(1) if m else None
+
+
 def chat(c: Ctx) -> tuple[str, list]:
     q = c.user_text.lower()
     if c.step == 0:
+        if "remember" in c.tool_names and TEACHING.search(c.user_text) and not q.rstrip().endswith("?"):
+            server = _focus(c)
+            kind = "preference" if re.search(r"\bprefer\b", q) else "rule" if re.search(r"\b(always|never|do not|don't|must)\b", q) else "fact"
+            return "", [("remember", {"kind": kind, "title": lesson_title(c.user_text), "scope": {"server": server} if server else {}})]
         if any(w in q for w in ("block", "lock", "waiting", "stuck", "frozen")):
             return "", [("lock_tree", {})]
         if any(w in q for w in ("cpu", "slow", "top quer", "expensive", "query")):
@@ -512,6 +531,17 @@ def _chat_answer(c: Ctx) -> str:
     lt, tq, ls, rs, wr, th, srv, cm, st = (c.last(n) for n in ("lock_tree", "top_queries", "list_sessions", "replication_status", "wraparound_status",
                                                                  "table_health", "list_servers", "current_metrics", "get_settings"))
     last_tool = c.results[-1][0] if c.results else ""
+    if last_tool == "remember":
+        said = str(c.results[-1][1])
+        if said.startswith("ERROR"):
+            return f"I could not keep that: {said[7:]}"
+        args = next((json.loads(tc["function"]["arguments"]) for m in reversed(c.messages) for tc in m.get("tool_calls") or []
+                     if tc["function"]["name"] == "remember"), {})
+        where = (args.get("scope") or {}).get("server") or "the whole fleet"
+        if said.startswith("already known"):
+            return f"I already know that ({said.split(' as ')[-1]}): nothing to add."
+        return (f"Remembered for **{where}**: *{args.get('title', '')}*\n\nIt is part of every incident, chat and routine from now on, for the whole team. "
+                "You can edit or retire it on the Knowledge page.")
     if last_tool == "propose_action":
         outcome = str(c.results[-1][1])
         if outcome.startswith("APPROVED") and "failed" not in outcome:
@@ -612,6 +642,97 @@ def routine(c: Ctx) -> tuple[str, list]:
     return "", [("submit_findings", {"status": status, "summary": summary, "findings": findings[:6]})]
 
 
+# ============================================================================================================ dreams
+NO_ASK = re.compile(r"\b(don't|do not|no need to|stop|never) (ask|asking)\b|\bwithout asking\b|\bjust do it\b", re.I)
+LOOK_FIRST = {"locks": "lock_tree for the root blocker, then list_sessions for how long its transaction has been open and what it last ran",
+              "connections": "list_sessions grouped by role and state: one role holding most of the slots is the usual answer",
+              "replication": "replication_status on the standby, then list_sessions there for the query replay waits for",
+              "activity": "list_sessions with state 'idle in transaction', oldest first, and the application behind them",
+              "cpu": "top_queries by total time, then EXPLAIN (run_sql) the new statement at the top",
+              "vacuum": "table_health for the dead rows, then get_settings pattern autovacuum for the cost limit",
+              "performance": "top_queries by temp, then get_settings work_mem",
+              "configuration": "get_settings with pending_restart_only, and where each setting comes from",
+              "wraparound": "wraparound_status for what holds the xmin horizon"}
+SKILL_TITLES = {"locks": "Lock queue behind a DDL", "connections": "One role floods the connection slots", "replication": "A standby falls behind on replay",
+                "activity": "Sessions left idle in transaction", "cpu": "One statement saturates the CPU", "vacuum": "Dead rows outpace autovacuum",
+                "performance": "Queries spill to disk", "configuration": "Settings waiting for a restart", "wraparound": "Transaction ID age climbing"}
+
+
+def _material(c: Ctx) -> dict[str, Any]:
+    first = next((str(m.get("content") or "") for m in c.messages if m.get("role") == "user"), "")
+    try:
+        return json.loads(first.split("JSON:\n", 1)[1])
+    except (IndexError, json.JSONDecodeError):
+        return {}
+
+
+def playbook(cand: dict[str, Any]) -> str:
+    cat, incs = cand["category"], cand["incidents"]
+    actions = list(dict.fromkeys(a.split("(")[0] for i in incs for a in i["actions"]))
+    protections = list(dict.fromkeys(p for i in incs for p in i["protections"] if p))[:4]
+    return "\n".join([
+        f"Fixed this way {fmt.plural(len(incs), 'time')} ({', '.join(i['id'] for i in incs)}).",
+        f"1. **Look first:** {LOOK_FIRST.get(cat, 'current_metrics, then the read tool for the signal')}.",
+        f"2. **Usual root cause:** {incs[-1]['root_cause'] or 'see the incidents'}",
+        "3. **The plan people approved:** " + ", ".join(f"`{a}`" for a in actions) + ", smallest first.",
+        "4. **Protections that held:** " + ("; ".join(protections) if protections else "none yet: propose one in Harden") + ".",
+        "5. **Ask a person when** the evidence points somewhere else, or the fix needs more than these actions.",
+    ])
+
+
+def dream(c: Ctx) -> tuple[str, list]:
+    """A careful night: people's words become instructions with their scope, a plan someone asked not to be asked about
+    becomes a proposal, and every kind of incident fixed twice gets its playbook."""
+    if c.step > 0:
+        said = [str(d) for name, d in c.results if name != "finish_dream"]
+        added = sum(s.startswith("added") for s in said)
+        skills = sum(s.startswith(("wrote skill", "updated skill")) for s in said)
+        asked = sum(s.startswith("proposed learned approval") for s in said)
+        known = sum(s.startswith("already known") for s in said)
+        parts = [fmt.plural(added, "new instruction")] + ([fmt.plural(skills, "playbook") + " written or brought up to date"] if skills else []) + \
+                ([fmt.plural(asked, "request") + " not to be asked again, for a person to accept"] if asked else [])
+        return "", [("finish_dream", {"summary": "Learned " + ", ".join(parts) + "." + (f" {fmt.plural(known, 'thing')} I already knew." if known else "")
+                                                 + " Questions and small talk left alone."})]
+    m = _material(c)
+    known = {re.sub(r"[^a-z0-9]+", " ", k["title"].lower()).strip() for k in m.get("knowledge", [])}
+    calls: list[tuple[str, dict[str, Any]]] = []
+
+    def teach(kind: str, title: str, scope: dict[str, Any], ev: dict[str, Any], body: str = "") -> None:
+        if re.sub(r"[^a-z0-9]+", " ", title.lower()).strip() not in known:
+            calls.append(("add_instruction", {"kind": kind, "title": title, "body": body, "scope": {k: v for k, v in scope.items() if v}, "evidence": [ev]}))
+
+    for st in m.get("statements", []):
+        if TEACHING.search(st["text"]) and not st["text"].rstrip().endswith("?"):
+            q = st["text"].lower()
+            kind = "preference" if "prefer" in q else "rule" if re.search(r"\b(always|never|do not|don't|must)\b", q) else "fact"
+            teach(kind, lesson_title(st["text"]), {"server": st.get("server")}, {"type": "chat", "id": str(st["id"])})
+    for n in m.get("notes", []):
+        if len(n["text"]) >= 20:
+            rule = re.search(r"\b(always|never|do not|don't|must)\b", n["text"], re.I)
+            teach("rule" if rule else "fact", lesson_title(n["text"]), {"server": n.get("server"), "category": n.get("category") if rule else None},
+                  {"type": "note", "id": str(n["id"])})
+    for d in m.get("decisions", []):
+        comment = d.get("comment", "").strip()
+        if len(comment) < 12 or not d.get("category"):
+            continue
+        if d["decision"] == "approved" and NO_ASK.search(comment):
+            have = {(x["action"], x["category"], x["environment"]) for x in m.get("learned_approvals", [])}
+            for a in dict.fromkeys(x.split("(")[0] for x in d.get("actions", [])):
+                if (a, d["category"], d["environment"]) not in have and a in ("cancel_backend", "terminate_backend", "terminate_sessions", "set_role_timeout",
+                                                                               "set_role_connection_limit", "vacuum_table", "analyze_table"):
+                    calls.append(("propose_learned_approval", {"action": a, "category": d["category"], "environment": d["environment"],
+                                                               "why": f"{d['by']}: “{comment}”", "evidence": [{"type": "decision", "id": str(d["id"])}]}))
+            continue
+        teach("rule" if d["decision"] == "rejected" else "fact", lesson_title(comment), {"server": d.get("server"), "category": d.get("category")},
+              {"type": "decision", "id": str(d["id"])}, body=f"Said when {d['by']} {d['decision']} “{d['what']}”.")
+    for cand in m.get("skill_candidates", []):
+        calls.append(("write_skill", {"category": cand["category"], "title": SKILL_TITLES.get(cand["category"], f"{fmt.category(cand['category'])} incidents"),
+                                      "body": playbook(cand), "evidence": [{"type": "incident", "id": i["id"]} for i in cand["incidents"][-3:]]}))
+    if not calls:
+        return "", [("finish_dream", {"summary": "Nothing worth keeping: the new material was questions and routine work, already covered by what I know."})]
+    return "Going through what the team decided and said since the last dream.", calls
+
+
 # ============================================================================================================ provider
 class DemoProvider:
     """The scripted stand-in for a model: it answers in the name of the endpoint it replaces (marked simulated)."""
@@ -626,7 +747,9 @@ class DemoProvider:
     async def complete(self, messages: list[dict[str, Any]], tools: list[dict[str, Any]] | None, max_output_tokens: int) -> LLMReply:
         c = Ctx(messages, tools)
         names = c.tool_names
-        if "propose_action" in names:
+        if "finish_dream" in names:
+            mode = "dream"
+        elif "propose_action" in names:
             mode = "chat"
         elif "submit_findings" in names:
             mode = "routine"
@@ -647,6 +770,8 @@ class DemoProvider:
             text, calls = chat(c)
         elif mode == "routine":
             text, calls = routine(c)
+        elif mode == "dream":
+            text, calls = dream(c)
         else:
             text, calls = PLAYBOOKS.get(c.scenario, generic)(c, mode)
         chars_in = sum(len(str(m.get("content") or "")) for m in messages) + 6000  # system prompt and tool schemas
